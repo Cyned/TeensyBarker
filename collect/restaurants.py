@@ -3,6 +3,7 @@ from urllib.parse import unquote
 from bs4 import BeautifulSoup
 from requests import get as http_get
 from os import path, makedirs
+import time
 
 
 class RestaurantPage:
@@ -33,15 +34,6 @@ class RestaurantPage:
                 return True
         return False
 
-    # def is_redirected_image_link(self, url):
-    #     """Checks is provided url is a pdf file"""
-    #     req = requests.get(url)
-    #     url = req.url
-    #     for format in self.IMAGE_FORMATS:
-    #         if url.endswith(format):
-    #             return unquote(url)
-    #     return False
-
     def is_menu_link(self, url):
         """Checks is provided url is a menu link"""
         for format in self.MENU:
@@ -71,30 +63,6 @@ class RestaurantPage:
 
         self.used_urls.append(m_url)
 
-    # def save_menu_images(self):
-    #     """Found all urls to menu files from urls list and save these files"""
-    #     menu_urls_copy = self.menu_urls[:]
-    #
-    #     for i in range(len(menu_urls_copy)):
-    #         m_url = menu_urls_copy[i]
-    #         # If url is a menu image - save it
-    #         if self.is_image_link(m_url):
-    #             print("Image URL:", m_url)
-    #             filename = self.get_filename_from_url(m_url)
-    #             self.save_file_from_url(m_url, filename)
-    #             # Remove used link from the urls list
-    #             self.menu_urls.remove(m_url)
-    #         else:
-    #             # After redirection url is a menu image - save it
-    #             img_url = self.is_redirected_image_link(m_url)
-    #             if img_url:
-    #                 if img_url not in self.used_urls:
-    #                     print("Redirected img URL:", img_url)
-    #                     filename = self.get_filename_from_url(img_url)
-    #                     self.save_file_from_url(img_url, filename)
-    #                     # Remove used link from the urls list
-    #                     self.menu_urls.remove(m_url)
-
     # Get menu links
     def search_menu_urls(self):
         """Get all menu links found on the page"""
@@ -115,7 +83,7 @@ class RestaurantPage:
                 if url not in self.used_urls:
                     self.menu_urls.append(url)
 
-        self.menu_urls = list(set(self.menu_urls)) #  remove duplicates
+        self.menu_urls = list(set(self.menu_urls))  # remove duplicates
 
     def collect_menu(self):
         """Find all menu images on the page and download them"""
@@ -124,21 +92,19 @@ class RestaurantPage:
 
         # If self.url is a menu image - save it
         if self.is_image_link(self.url):
-            print("Image URL:", self.url)
+            print("\n  Downloading image", self.url)
             filename = self.get_filename_from_url(self.url)
             self.save_file_from_url(self.url, filename)
             return
 
-        print("\n\nProcessing ...", self.url)
         html = urlopen(self.url)
         self.bs = BeautifulSoup(html.read(), features="lxml")
 
         self.search_menu_urls()
-        # self.save_menu_images()
 
 
 class Restaurant:
-    """Looks for menu images or pdf files on the whole restaurant website"""
+    """Looks for menu images (or pdf files) on the whole restaurant website"""
     def __init__(self, site_url):
         """Init restaurant url"""
         self.site_url = site_url
@@ -147,18 +113,14 @@ class Restaurant:
         """Find all menu images on the restaurant website and download them"""
         urls = [self.site_url]
         used_urls = []
-        count = 1
+        logger = RestaurantLogger()
+        logger.start()
 
         for url in urls:
-            print("\n\n\n============" + str(count) + "============\n\n")
             page = RestaurantPage(self.site_url, url, used_urls)
             page.collect_menu()
 
             menu_urls = page.get_menu_urls()
-
-            print("Menu:", menu_urls, end="\n\n")
-            print("Used urls:", used_urls, end="\n\n")
-            print("Current list:", urls, end="\n\n")
 
             for menu_url in menu_urls:
                 req = http_get(menu_url)
@@ -166,4 +128,68 @@ class Restaurant:
                 if real_url not in urls and real_url not in used_urls:
                     urls.append(real_url)
 
-            count += 1
+            # Logging
+            to_be_processed = urls
+            logger.log(url, menu_urls, used_urls, to_be_processed)
+
+        logger.end()
+
+
+class RestaurantLogger:
+    """Logging restaurant processing process"""
+    def __init__(self):
+        """Init timer variables and iterator"""
+        self.before = None
+        self.after = None
+        self.iteration = 1
+
+    def start(self):
+        """Start timer to calculate execution time"""
+        self.before = time.time()
+
+    def log(self, current_url, menu_urls, used_urls, to_be_processed):
+        """Log all necessary info about parsing process"""
+        print("""
+===========
+==== """ + str(self.iteration) + """ ====
+===========
+        """)
+        print("  {} {}\n".format("Parsing", current_url))
+
+        print("  Found menu URLs on page:")
+        if not menu_urls:
+            print("    <None>")
+        elif type(menu_urls) is list:
+            for url in menu_urls:
+                print("    -", url)
+        else:
+            print("    -", menu_urls)
+
+        print("\n  Parsed URLs:")
+        if not used_urls:
+            print("    <None>")
+        elif type(used_urls) is list:
+            for url in used_urls:
+                print("    -", url)
+        else:
+            print("    -", used_urls)
+
+        print("\n  To be processed:")
+        if not to_be_processed:
+            print("    <None>")
+        elif type(to_be_processed) is list:
+            for url in to_be_processed:
+                print("    -", url)
+        else:
+            print("    -", to_be_processed)
+
+        self.iteration += 1
+
+    def end(self):
+        """After done with parsing whole site - show parsing time"""
+        self.after = time.time()
+        print("\n\n{} {} {}\n"
+              .format(
+                "Working time is",
+                round(self.after-self.before, 1),
+                "sec"))
