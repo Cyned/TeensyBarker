@@ -4,6 +4,8 @@ from bs4 import BeautifulSoup
 from requests import get as http_get
 from os import path, makedirs
 import time
+from datetime import datetime
+import pdfkit
 
 
 class RestaurantLogger:
@@ -13,62 +15,66 @@ class RestaurantLogger:
         self.before = None
         self.after = None
         self.iteration = 1
+        self.f = open("logs.txt", "a")
 
     def start(self):
         """Start timer to calculate execution time"""
         self.before = time.time()
+        self.f.write("\n\n\n")
 
     def log(self, current_url, menu_urls, used_urls, to_be_processed):
         """Log all necessary info about parsing process"""
-        print("""
-===========
-==== """ + str(self.iteration) + """ ====
-===========
-        """)
-        print("  {} {}\n".format("Parsing", current_url))
+        self.f.write("============================\n")
+        self.f.write("{:14}\n".format(self.iteration))
+        self.f.write("============================\n")
+        now = datetime.now()
+        self.f.write(" " + str(now) + "\n")
+        self.f.write("============================\n")
+        self.f.write("\n  {} {}\n\n".format("Parsing", current_url))
 
-        print("  Found menu URLs on page:")
+        self.f.write("  Found menu URLs on page:\n")
         if not menu_urls:
-            print("    <None>")
+            self.f.write("    <None>\n")
         elif type(menu_urls) is list:
             for url in menu_urls:
-                print("    -", url)
+                self.f.write("    -" + str(url) + "\n")
         else:
-            print("    -", menu_urls)
+            self.f.write("    -" + str(menu_urls) + "\n")
 
-        print("\n  Parsed URLs:")
+        self.f.write("\n  Parsed URLs:\n")
         if not used_urls:
-            print("    <None>")
+            self.f.write("    <None>\n")
         elif type(used_urls) is list:
             for url in used_urls:
-                print("    -", url)
+                self.f.write("    -" + str(url) + "\n")
         else:
-            print("    -", used_urls)
+            self.f.write("    -" + str(used_urls) + "\n")
 
-        print("\n  To be processed:")
+        self.f.write("\n  To be processed:\n")
         if not to_be_processed:
-            print("    <None>")
+            self.f.write("    <None>\n")
         elif type(to_be_processed) is list:
             for url in to_be_processed:
-                print("    -", url)
+                self.f.write("    -" + str(url) + "\n")
         else:
-            print("    -", to_be_processed)
+            self.f.write("    -" + str(to_be_processed) + "\n")
 
         self.iteration += 1
 
     def end(self):
         """After done with parsing whole site - show parsing time"""
         self.after = time.time()
-        print("\n\n{} {} {}\n"
+        self.f.write("\n\n{} {} {}\n\n"
               .format(
                 "Working time is",
                 round(self.after-self.before, 1),
                 "sec"))
+        self.f.close()
 
 
 class RestaurantPage:
     """Looks for menu images or pdf files on the restaurant page"""
-    def __init__(self, site_url, url, used_urls=[]):
+    def __init__(self, site_url, url, used_urls=[], dirname='data'):
         """Init some useful values"""
         self.SITE_URL = site_url
         self.IMAGE_FORMATS = [".pdf", ".jpg", ".jpeg", ".png", ".bmp", ".tiff"]
@@ -76,8 +82,9 @@ class RestaurantPage:
         self.DISHES = [
             "вино", "вина", "винная", "винна", "салати", "салаты", "напої",
             "напитки", "соки"]
-        self.directory = "./data/"+self.get_foldername_from_url(self.SITE_URL)
-        self.url = url  # current url
+        self.directory = dirname + "/" + \
+            self.get_foldername_from_url(self.SITE_URL)
+        self.URL = url  # current url
         self.bs = None  # BeautifulSoup object
         self.menu_urls = []  # all menu urls from site
         self.used_urls = used_urls  # list of processed urls
@@ -179,40 +186,64 @@ class RestaurantPage:
     def collect_menu(self):
         """Find all menu images on the page and download them"""
         # Add url to the used urls list
-        self.used_urls.append(self.url)
+        self.used_urls.append(self.URL)
 
-        # If self.url is a menu image - save it
-        if self.is_image_link(self.url):
-            print("\n  Downloading image", self.url)
-            filename = self.get_filename_from_url(self.url)
-            self.save_file_from_url(self.url, filename)
+        filename = self.get_filename_from_url(self.URL)
+        if self.is_image_link(self.URL):
+            # If self.URL is a menu image - save it
+            # print("\n  Downloading image " + self.URL)
+            self.save_file_from_url(self.URL, filename)
             return
 
         try:
-            html = urlopen(self.url)
-            self.bs = BeautifulSoup(html.read(), features="lxml")
+            html = urlopen(self.URL).read()
+            self.bs = BeautifulSoup(html, features="lxml")
         except:
             return
+
+        # Make a pdf from the url which is not website homepage
+        if self.URL != self.SITE_URL:
+            # print("\n  Creating pdf from html " + self.URL)
+
+            # If folder not exists - create
+            if not path.exists(self.directory):
+                makedirs(self.directory)
+
+            # Generate filename for the pdf file
+            filename = filename.replace(".html", "")  # TEMP SOLUTION => TO BE REPLACED!!!
+            filepath = self.directory + "/" + filename + ".pdf"
+            htmlfile = html.decode('utf-8')
+
+            # Show all hidden elements (could be menu items)
+            htmlfile = htmlfile.replace("display: none", "display: block")
+            htmlfile = htmlfile.replace("display:none", "display: block")
+
+            # Save pdf
+            options = {
+                "quiet": ""
+            }
+            pdfkit.from_string(htmlfile, filepath, options=options)
+
 
         self.search_menu_urls()
 
 
 class Restaurant:
     """Looks for menu images (or pdf files) on the whole restaurant website"""
-    def __init__(self, site_url, current_url):
+    def __init__(self, site_url, dirname='data'):
         """Init restaurant url"""
         self.site_url = site_url
-        self.current_url = current_url
+        self.dirname = dirname
 
     def collect_menu(self):
         """Find all menu images on the restaurant website and download them"""
-        urls = [self.current_url]
+        urls = [self.site_url]
         used_urls = []
         logger = RestaurantLogger()
         logger.start()
 
         for url in urls:
-            page = RestaurantPage(self.site_url, url, used_urls)
+            page = RestaurantPage(self.site_url, url, used_urls, self.dirname)
             page.collect_menu()
 
             menu_urls = page.get_menu_urls()
