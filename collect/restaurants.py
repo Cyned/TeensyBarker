@@ -65,10 +65,10 @@ class RestaurantLogger:
         """After done with parsing whole site - show parsing time"""
         self.after = time.time()
         self.f.write("\n\n{} {} {}\n\n"
-              .format(
-                "Working time is",
-                round(self.after-self.before, 1),
-                "sec"))
+                     .format(
+                        "Working time is",
+                        round(self.after-self.before, 1),
+                        "sec"))
         self.f.close()
 
 
@@ -223,7 +223,6 @@ class RestaurantPage:
                 "quiet": ""
             }
             pdfkit.from_string(htmlfile, filepath, options=options)
-
 
         self.search_menu_urls()
 

@@ -6,34 +6,35 @@ import shutil
 from restaurants import Restaurant
 
 
-def get_foldername_from_url(url):
-    """Get name of the folder from the website url"""
-    url = url[url.find("://")+3:]  # url without http:// or https://
-    return url[:url.find("/")]
-
-def finding_menus(url):
-    """Get all filenames from test and template folders"""
-    testdir = "test"
-    fortestdir = "fortest"
-    test_content = []
-    fortest_content = []
-
-    try:
-        restaurant = Restaurant(url, testdir)
-        restaurant.collect_menu()
-
-        foldername = get_foldername_from_url(url)
-        test_content = os.listdir(testdir + "/" + foldername)
-        fortest_content = os.listdir(fortestdir + "/" + foldername)
-
-    finally:
-        shutil.rmtree(testdir)
-
-    return test_content, fortest_content
-
-
 class SiteTests(unittest.TestCase):
     """Test finding menu on the different websites"""
+
+    def __init__(self, *args, **kwargs):
+        """"""
+        super(SiteTests, self).__init__(*args, **kwargs)
+        self.testdir = "test"
+        self.fortestdir = "fortest"
+        self.test_content = []
+        self.fortest_content = []
+
+    def setUp(self):
+        """Clear temp variables after each test"""
+        self.test_content = []
+        self.fortest_content = []
+
+    def finding_menus(self, url):
+        """Get all filenames from test and template folders"""
+        restaurant = Restaurant(url, self.testdir)
+        restaurant.collect_menu()
+
+        foldername = self.get_foldername_from_url(url)
+        self.test_content = os.listdir(self.testdir + "/" + foldername)
+        self.fortest_content = os.listdir(self.fortestdir + "/" + foldername)
+
+    def get_foldername_from_url(self, url):
+        """Get name of the folder from the website url"""
+        url = url[url.find("://")+3:]  # url without http:// or https://
+        return url[:url.find("/")]
 
     def test_santori(self):
         """
@@ -41,8 +42,8 @@ class SiteTests(unittest.TestCase):
         Test finding menu on the site http://santori.com.ua/
         """
         url = "http://santori.com.ua/"
-        test_content, fortest_content = finding_menus(url)
-        self.assertEqual(test_content, fortest_content)
+        self.finding_menus(url)
+        self.assertEqual(self.test_content, self.fortest_content)
 
     def test_mistercat(self):
         """
@@ -50,8 +51,8 @@ class SiteTests(unittest.TestCase):
         Test finding menu on the site https://mistercat.ua/
         """
         url = "https://mistercat.ua/"
-        test_content, fortest_content = finding_menus(url)
-        self.assertEqual(test_content, fortest_content)
+        self.finding_menus(url)
+        self.assertEqual(self.test_content, self.fortest_content)
 
     def test_finefamily(self):
         """
@@ -59,8 +60,12 @@ class SiteTests(unittest.TestCase):
         Test finding menu on the site http://finefamily.com.ua/
         """
         url = "http://finefamily.com.ua/"
-        test_content, fortest_content = finding_menus(url)
-        self.assertEqual(test_content, fortest_content)
+        self.finding_menus(url)
+        self.assertEqual(self.test_content, self.fortest_content)
+
+    def tearDown(self):
+        """Delete test directory"""
+        shutil.rmtree(self.testdir)
 
 
 if __name__ == "__main__":
