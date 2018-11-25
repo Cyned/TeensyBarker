@@ -8,80 +8,18 @@ from datetime import datetime
 import pdfkit
 
 
-class RestaurantLogger:
-    """Logging restaurant processing process"""
-    def __init__(self):
-        """Init timer variables and iterator"""
-        self.before = None
-        self.after = None
-        self.iteration = 1
-        self.f = open("logs.txt", "a")
-
-    def start(self):
-        """Start timer to calculate execution time"""
-        self.before = time.time()
-        self.f.write("\n\n\n")
-
-    def log(self, current_url, menu_urls, used_urls, to_be_processed):
-        """Log all necessary info about parsing process"""
-        self.f.write("============================\n")
-        self.f.write("{:14}\n".format(self.iteration))
-        self.f.write("============================\n")
-        now = datetime.now()
-        self.f.write(" " + str(now) + "\n")
-        self.f.write("============================\n")
-        self.f.write("\n  {} {}\n\n".format("Parsing", current_url))
-
-        self.f.write("  Found menu URLs on page:\n")
-        if not menu_urls:
-            self.f.write("    <None>\n")
-        elif type(menu_urls) is list:
-            for url in menu_urls:
-                self.f.write("    -" + str(url) + "\n")
-        else:
-            self.f.write("    -" + str(menu_urls) + "\n")
-
-        self.f.write("\n  Parsed URLs:\n")
-        if not used_urls:
-            self.f.write("    <None>\n")
-        elif type(used_urls) is list:
-            for url in used_urls:
-                self.f.write("    -" + str(url) + "\n")
-        else:
-            self.f.write("    -" + str(used_urls) + "\n")
-
-        self.f.write("\n  To be processed:\n")
-        if not to_be_processed:
-            self.f.write("    <None>\n")
-        elif type(to_be_processed) is list:
-            for url in to_be_processed:
-                self.f.write("    -" + str(url) + "\n")
-        else:
-            self.f.write("    -" + str(to_be_processed) + "\n")
-
-        self.iteration += 1
-
-    def end(self):
-        """After done with parsing whole site - show parsing time"""
-        self.after = time.time()
-        self.f.write("\n\n{} {} {}\n\n"
-                     .format(
-                        "Working time is",
-                        round(self.after-self.before, 1),
-                        "sec"))
-        self.f.close()
-
-
 class RestaurantPage:
     """Looks for menu images or pdf files on the restaurant page"""
     def __init__(self, site_url, url, used_urls=[], dirname='data'):
         """Init some useful values"""
         self.SITE_URL = site_url
         self.IMAGE_FORMATS = [".pdf", ".jpg", ".jpeg", ".png", ".bmp", ".tiff"]
-        self.MENU = ["menyu", "menu"]
-        self.DISHES = [
-            "вино", "вина", "винная", "винна", "салати", "салаты", "напої",
-            "напитки", "соки"]
+        self.MENU = ["menyu", "menu", "kitchen"]
+        # self.DISHES = [
+        #     "вино", "вина", "винная", "винна", "салати", "салаты", "напої",
+        #     "напитки", "соки", "закуски", "блюда", "гарниры", "соусы",
+        #     "десерты", "course", "garnish", "desserts", "pastry", "salads",
+        #     "sauces", "snacks", "wine", "alcohol", "drinks"]
         self.directory = dirname + "/" + \
             self.get_foldername_from_url(self.SITE_URL)
         self.URL = url  # current url
@@ -161,6 +99,7 @@ class RestaurantPage:
                     if url[:1] == '/':
                         url = url[1:]
                     url = self.SITE_URL + url
+                    # print(url)
                 if url not in self.used_urls:
                     self.menu_urls.append(url)
 
@@ -204,6 +143,7 @@ class RestaurantPage:
         # Make a pdf from the url which is not website homepage
         if self.URL != self.SITE_URL:
             # print("\n  Creating pdf from html " + self.URL)
+            # print(html)
 
             # If folder not exists - create
             if not path.exists(self.directory):
@@ -212,7 +152,7 @@ class RestaurantPage:
             # Generate filename for the pdf file
             filename = filename.replace(".html", "")  # TEMP SOLUTION => TO BE REPLACED!!!
             filepath = self.directory + "/" + filename + ".pdf"
-            htmlfile = html.decode('utf-8')
+            htmlfile = self.bs.prettify() # html.decode('utf-8')
 
             # Show all hidden elements (could be menu items)
             htmlfile = htmlfile.replace("display: none", "display: block")
@@ -222,7 +162,10 @@ class RestaurantPage:
             options = {
                 "quiet": ""
             }
-            pdfkit.from_string(htmlfile, filepath, options=options)
+
+            pdfkit.from_string(str(htmlfile), filepath, options=options)
+            # print(self.URL)
+            # pdfkit.from_url(self.URL, filepath, options=options)
 
         self.search_menu_urls()
 
@@ -261,3 +204,67 @@ class Restaurant:
             logger.log(url, menu_urls, used_urls, to_be_processed)
 
         logger.end()
+
+
+class RestaurantLogger:
+    """Logging restaurant processing process"""
+    def __init__(self):
+        """Init timer variables and iterator"""
+        self.before = None
+        self.after = None
+        self.iteration = 1
+        self.f = open("logs.txt", "a")
+
+    def start(self):
+        """Start timer to calculate execution time"""
+        self.before = time.time()
+        self.f.write("\n\n\n")
+
+    def log(self, current_url, menu_urls, used_urls, to_be_processed):
+        """Log all necessary info about parsing process"""
+        self.f.write("============================\n")
+        self.f.write("{:14}\n".format(self.iteration))
+        self.f.write("============================\n")
+        now = datetime.now()
+        self.f.write(" " + str(now) + "\n")
+        self.f.write("============================\n")
+        self.f.write("\n  {} {}\n\n".format("Parsing", current_url))
+
+        self.f.write("  Found menu URLs on page:\n")
+        if not menu_urls:
+            self.f.write("    <None>\n")
+        elif type(menu_urls) is list:
+            for url in menu_urls:
+                self.f.write("    -" + str(url) + "\n")
+        else:
+            self.f.write("    -" + str(menu_urls) + "\n")
+
+        self.f.write("\n  Parsed URLs:\n")
+        if not used_urls:
+            self.f.write("    <None>\n")
+        elif type(used_urls) is list:
+            for url in used_urls:
+                self.f.write("    -" + str(url) + "\n")
+        else:
+            self.f.write("    -" + str(used_urls) + "\n")
+
+        self.f.write("\n  To be processed:\n")
+        if not to_be_processed:
+            self.f.write("    <None>\n")
+        elif type(to_be_processed) is list:
+            for url in to_be_processed:
+                self.f.write("    -" + str(url) + "\n")
+        else:
+            self.f.write("    -" + str(to_be_processed) + "\n")
+
+        self.iteration += 1
+
+    def end(self):
+        """After done with parsing whole site - show parsing time"""
+        self.after = time.time()
+        self.f.write("\n\n{} {} {}\n\n"
+                     .format(
+                        "Working time is",
+                        round(self.after-self.before, 1),
+                        "sec"))
+        self.f.close()
