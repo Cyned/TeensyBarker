@@ -59,12 +59,21 @@ class RestaurantPage:
 
     def get_filename_from_url(self, url):
         """Get name of the file from provided url"""
-        return url[url.rfind('/')+1:]
+        if url[-1:] == "/":
+            url = url[:-1]
+        return url[url.rfind("/")+1:]
 
     def get_foldername_from_url(self, url):
         """Get name of the folder from the website url"""
         url = url[url.find("://")+3:]  # url without http:// or https://
         return url[:url.find("/")]
+
+    def get_php_filename(self, url):
+        """
+        Extract php filename from ulr
+        Ex.: http://www.cimes.com.ua/main.php?open=kitchen&cat=1 => /main.php
+        """
+        return url[url.rfind("/"):url.find(".php")+4]
 
     def save_file_from_url(self, m_url, filename):
         """Saves file from url"""
@@ -98,8 +107,15 @@ class RestaurantPage:
                     # Remove first slash if needed
                     if url[:1] == '/':
                         url = url[1:]
-                    url = self.SITE_URL + url
-                    # print(url)
+
+                    # Add sitename if url is just params to php site
+                    # Ex.: ?page=3 => http://www.site.com/main.php?page=3
+                    if url[0] == "?":
+                        php_filename = self.get_php_filename(self.URL)
+                        url = self.SITE_URL + php_filename + url
+                    else:
+                        url = self.SITE_URL + url
+
                 if url not in self.used_urls:
                     self.menu_urls.append(url)
 
@@ -142,8 +158,6 @@ class RestaurantPage:
 
         # Make a pdf from the url which is not website homepage
         if self.URL != self.SITE_URL:
-            # print("\n  Creating pdf from html " + self.URL)
-            # print(html)
 
             # If folder not exists - create
             if not path.exists(self.directory):
@@ -163,9 +177,12 @@ class RestaurantPage:
                 "quiet": ""
             }
 
-            pdfkit.from_string(str(htmlfile), filepath, options=options)
+            # print(htmlfile)
+            # print(filepath)
             # print(self.URL)
-            # pdfkit.from_url(self.URL, filepath, options=options)
+            # pdfkit.from_string(str(htmlfile), filepath, options=options)
+            # print(self.URL)
+            pdfkit.from_url(self.URL, filepath, options=options)
 
         self.search_menu_urls()
 

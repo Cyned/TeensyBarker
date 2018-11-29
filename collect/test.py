@@ -36,6 +36,7 @@ class SiteTests(unittest.TestCase):
         url = url[url.find("://")+3:]  # url without http:// or https://
         return url[:url.find("/")]
 
+    # @unittest.skip('always skipped')
     def test_santori(self):
         """
         img & pdf
@@ -45,6 +46,7 @@ class SiteTests(unittest.TestCase):
         self.finding_menus(url)
         self.assertEqual(self.test_content, self.fortest_content)
 
+    # @unittest.skip('always skipped')
     def test_mistercat(self):
         """
         img & pdf
@@ -54,12 +56,22 @@ class SiteTests(unittest.TestCase):
         self.finding_menus(url)
         self.assertEqual(self.test_content, self.fortest_content)
 
+    # @unittest.skip('always skipped')
     def test_finefamily(self):
         """
         html
         Test finding menu on the site http://finefamily.com.ua/
         """
         url = "http://finefamily.com.ua/"
+        self.finding_menus(url)
+        self.assertEqual(self.test_content, self.fortest_content)
+
+    def test_cimes(self):
+        """
+        php
+        Test finding menu on the site http://www.cimes.com.ua/
+        """
+        url = "http://www.cimes.com.ua/"
         self.finding_menus(url)
         self.assertEqual(self.test_content, self.fortest_content)
 

@@ -4,3 +4,4 @@ fortest/
 logs.txt
 __pycache__
 ~$*
+*.ini
