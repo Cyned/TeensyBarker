@@ -11,9 +11,9 @@ Utility for collect menus from websites.
 pip3 install -r requirements.txt
 ```
 
-# Connect to database
+# Connect to the database
 
-To test database connection cretea file **database/database.ini** with following content
+To test database connection crete a file **database/database.ini** with following content
 ```
 [postgresql]
 host=<hostname>
