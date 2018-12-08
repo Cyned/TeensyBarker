@@ -24,9 +24,11 @@ def execute(query):
             result.append(row)
             row = cur.fetchone()
 
+        conn.commit()
         cur.close()  # close the connection
 
     except (Exception, psycopg2.DatabaseError) as error:
+        print('Error')
         print(error)
     finally:
         if conn is not None:
