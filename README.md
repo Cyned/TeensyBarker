@@ -26,4 +26,4 @@ password=<password>
 
 ```
 python3 test.py
-```s
+```
