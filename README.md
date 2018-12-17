@@ -5,7 +5,7 @@ Utility for collect menus from websites.
 
 # Getting Started
 
-1. Make sure you have **Python >=3.7.0** and **pip** for approprite Python version
+1. Make sure you have **Python >=3.7.0** and **pip** for appropriate Python version
 2. Install all requirements via following command
 ```
 pip3 install -r requirements.txt
@@ -13,7 +13,7 @@ pip3 install -r requirements.txt
 
 # Connect to the database
 
-To test database connection crete a file **database/database.ini** with following content
+To test database connection create a file **database/database.ini** with following content
 ```
 [postgresql]
 host=<hostname>
@@ -24,4 +24,6 @@ password=<password>
 
 # Test
 
-in progress..
+```
+python3 test.py
+```s

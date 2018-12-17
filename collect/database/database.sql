@@ -1,18 +1,25 @@
 CREATE TABLE "Places" (
-    "PlaceId"   serial PRIMARY key,
-    "Name"      VARCHAR(100) NOT NULL,
-    "Website"     varchar(100) NOT NULL,
-    "Address"   varchar(150) NOT NULL,
-    "City"      varchar(40),
-    "GooglePin" varchar(27) NOT NULL,
-    "CoordinateX" REAL NOT NULL,
-    "CoordinateY" REAL NOT NULL,
+    "PlaceId"     serial primary key,
+    "Name"        varchar(100) not null,
+    "Website"     varchar(100) not null,
+    "Address"     varchar(150) not null,
+    "City"        varchar(40),
+    "GooglePin"   varchar(27) not null,
+    "CoordinateX" real not null,
+    "CoordinateY" real not null,
     "Phone"       varchar(12)
 );
 
 CREATE TABLE "WorkingTime" (
-    "TimeId" serial PRIMARY key,
-    "PlaceId" INT4 NOT NULL,
-    "Days" INT NOT NULL,
-    "OpenTime" varchar(17) NOT NULL
+    "TimeId"   serial primary key,
+    "PlaceId"  int4 not null,
+    "Days"     int not null,
+    "OpenTime" varchar(17) not null
+);
+
+CREATE TABLE "Menus" (
+    "MenuId"          serial primary key,
+    "PlaceId"         int4 not null,
+    "MenuLinkToFS"    varchar(100) not null,
+    "DateMenuUpdated" timestamp not null
 );

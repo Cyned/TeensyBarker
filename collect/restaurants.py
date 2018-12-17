@@ -5,22 +5,30 @@ from requests import get as http_get
 from os import path, makedirs
 import pdfkit
 from logger import RestaurantLogger
+from database.database import execute
 
 
 class RestaurantPage:
     """Looks for menu images or pdf files on the restaurant page"""
-    def __init__(self, site_url, url, used_urls=[], dirname='data'):
+    def __init__(self, site_url, url, used_urls=[], dirname='data',
+            subdirname=None):
         """Init some useful values"""
         self.SITE_URL = site_url
         self.IMAGE_FORMATS = [".pdf", ".jpg", ".jpeg", ".png", ".bmp", ".tiff"]
         self.MENU = ["menyu", "menu", "kitchen"]
-        # self.DISHES = [
-        #     "вино", "вина", "винная", "винна", "салати", "салаты", "напої",
-        #     "напитки", "соки", "закуски", "блюда", "гарниры", "соусы",
-        #     "десерты", "course", "garnish", "desserts", "pastry", "salads",
-        #     "sauces", "snacks", "wine", "alcohol", "drinks"]
-        self.directory = dirname + "/" + \
-            self.get_foldername_from_url(self.SITE_URL)
+        self.DISHES = [
+            "вино", "вина", "винная", "винна", "салати", "салаты", "напої",
+            "напитки", "соки", "закуски", "блюда", "гарниры", "соусы",
+            "десерты", "course", "garnish", "desserts", "pastry", "salads",
+            "sauces", "snacks", "wine", "alcohol", "drinks"]
+        self.placeid = subdirname
+
+        if subdirname:
+            self.directory = dirname + "/" + subdirname
+        else:
+            self.directory = dirname + "/" + \
+                self.get_foldername_from_url(self.SITE_URL)
+
         self.URL = url  # current url
         self.bs = None  # BeautifulSoup object
         self.menu_urls = []  # all menu urls from site
@@ -82,10 +90,33 @@ class RestaurantPage:
         if not path.exists(self.directory):
             makedirs(self.directory)
 
-        with open(self.directory + "/" + filename, "wb") as f:
+        filepath = self.directory + "/" + filename
+
+        with open(filepath, "wb") as f:
             f.write(req.content)
 
+        # Add link to the file to the database
+        if self.placeid:
+            self.saveToDatabase(filepath)
+
         self.used_urls.append(m_url)
+
+    def saveToDatabase(self, filepath):
+        """Save to the database link to the file"""
+        res = execute('select "MenuId" from "Menus" where "MenuLinkToFS" = \'' +
+            filepath + '\';')
+
+        if res:
+            # Filepath is already in the database => update DateMenuUpdated
+            menuid = str(res[0][0])
+            execute('update "Menus" set "DateMenuUpdated" = current_timestamp' +
+                ' where "MenuId" = \'' + menuid + '\';')
+        else:
+            # Not in the database => save filepath & DateMenuUpdated
+            execute('insert into "Menus"' +
+            ' ("PlaceId", "MenuLinkToFS", "DateMenuUpdated")' +
+            ' values (' +
+            str(self.placeid) + ', \'' + filepath + '\', current_timestamp);')
 
     # Get menu links
     def search_menu_urls(self):
@@ -145,7 +176,6 @@ class RestaurantPage:
         filename = self.get_filename_from_url(self.URL)
         if self.is_image_link(self.URL):
             # If self.URL is a menu image - save it
-            # print("\n  Downloading image " + self.URL)
             self.save_file_from_url(self.URL, filename)
             return
 
@@ -171,18 +201,18 @@ class RestaurantPage:
             htmlfile = htmlfile.replace("display: none", "display: block")
             htmlfile = htmlfile.replace("display:none", "display: block")
 
-            # Save pdf
+            # Save pdf options
             options = {
                 "quiet": ""
             }
 
             try:
-                # print(htmlfile)
-                # print(filepath)
-                # print(self.URL)
-                # pdfkit.from_string(str(htmlfile), filepath, options=options)
-                # print(self.URL)
+                # Save pdf
                 pdfkit.from_url(self.URL, filepath, options=options)
+
+                # Add link to the file to the database
+                if self.placeid:
+                    self.saveToDatabase(filepath)
             except:
                 pass
 
@@ -191,10 +221,11 @@ class RestaurantPage:
 
 class Restaurant:
     """Looks for menu images (or pdf files) on the whole restaurant website"""
-    def __init__(self, site_url, dirname='data'):
+    def __init__(self, site_url, dirname='data', subdirname=None):
         """Init restaurant url"""
         self.site_url = site_url
         self.dirname = dirname
+        self.subdirname = subdirname
 
     def collect_menu(self):
         """Find all menu images on the restaurant website and download them"""
@@ -204,7 +235,8 @@ class Restaurant:
         logger.start()
 
         for url in urls:
-            page = RestaurantPage(self.site_url, url, used_urls, self.dirname)
+            page = RestaurantPage(self.site_url, url, used_urls, self.dirname,
+                self.subdirname)
             page.collect_menu()
 
             menu_urls = page.get_menu_urls()
