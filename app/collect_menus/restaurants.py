@@ -1,26 +1,29 @@
+import pdfkit
+
+from bs4 import BeautifulSoup
+from os import path, makedirs
 from urllib.request import urlopen
 from urllib.parse import unquote
-from bs4 import BeautifulSoup
 from requests import get as http_get
-from os import path, makedirs
-import pdfkit
+
 from logger import RestaurantLogger
-from database.database import execute
+from config import MENUS_DIR
+from databases import BDPlaces
 
 
 class RestaurantPage:
     """Looks for menu images or pdf files on the restaurant page"""
-    def __init__(self, site_url, url, used_urls=[], dirname='data',
+    def __init__(self, site_url, url, used_urls=[], dirname=MENUS_DIR,
             subdirname=None):
         """Init some useful values"""
         self.SITE_URL = site_url
         self.IMAGE_FORMATS = [".pdf", ".jpg", ".jpeg", ".png", ".bmp", ".tiff"]
         self.MENU = ["menyu", "menu", "kitchen"]
-        self.DISHES = [
-            "вино", "вина", "винная", "винна", "салати", "салаты", "напої",
-            "напитки", "соки", "закуски", "блюда", "гарниры", "соусы",
-            "десерты", "course", "garnish", "desserts", "pastry", "salads",
-            "sauces", "snacks", "wine", "alcohol", "drinks"]
+        # self.DISHES = [
+        #     "вино", "вина", "винная", "винна", "салати", "салаты", "напої",
+        #     "напитки", "соки", "закуски", "блюда", "гарниры", "соусы",
+        #     "десерты", "course", "garnish", "desserts", "pastry", "salads",
+        #     "sauces", "snacks", "wine", "alcohol", "drinks"]
         self.placeid = subdirname
 
         if subdirname:
@@ -103,20 +106,21 @@ class RestaurantPage:
 
     def saveToDatabase(self, filepath):
         """Save to the database link to the file"""
-        res = execute('select "MenuId" from "Menus" where "MenuLinkToFS" = \'' +
-            filepath + '\';')
+        with BDPlaces() as db:
+            res = db.execute('select "MenuId" from "Menus" where "MenuLinkToFS" = \'' +
+                filepath + '\';')
 
-        if res:
-            # Filepath is already in the database => update DateMenuUpdated
-            menuid = str(res[0][0])
-            execute('update "Menus" set "DateMenuUpdated" = current_timestamp' +
-                ' where "MenuId" = \'' + menuid + '\';')
-        else:
-            # Not in the database => save filepath & DateMenuUpdated
-            execute('insert into "Menus"' +
-            ' ("PlaceId", "MenuLinkToFS", "DateMenuUpdated")' +
-            ' values (' +
-            str(self.placeid) + ', \'' + filepath + '\', current_timestamp);')
+            if res:
+                # Filepath is already in the database => update DateMenuUpdated
+                menuid = str(res[0][0])
+                db.execute('update "Menus" set "DateMenuUpdated" = current_timestamp' +
+                    ' where "MenuId" = \'' + menuid + '\';')
+            else:
+                # Not in the database => save filepath & DateMenuUpdated
+                db.execute('insert into "Menus"' +
+                ' ("PlaceId", "MenuLinkToFS", "DateMenuUpdated")' +
+                ' values (' +
+                str(self.placeid) + ', \'' + filepath + '\', current_timestamp);')
 
     # Get menu links
     def search_menu_urls(self):
@@ -221,7 +225,7 @@ class RestaurantPage:
 
 class Restaurant:
     """Looks for menu images (or pdf files) on the whole restaurant website"""
-    def __init__(self, site_url, dirname='data', subdirname=None):
+    def __init__(self, site_url, dirname=MENUS_DIR, subdirname=None):
         """Init restaurant url"""
         self.site_url = site_url
         self.dirname = dirname

@@ -1,5 +1,9 @@
+import os
 import time
 from datetime import datetime
+
+
+LOGGER_DIR = 'app/logger'
 
 
 class RestaurantLogger:
@@ -9,7 +13,7 @@ class RestaurantLogger:
         self.before = None
         self.after = None
         self.iteration = 1
-        self.f = open("logs.txt", "a")
+        self.f = open(os.path.join(LOGGER_DIR, "logs.txt"), "a")
 
     def start(self):
         """Start timer to calculate execution time"""

@@ -1,4 +1,4 @@
-﻿# TeensyBarker collector
+# TeensyBarker collector
 
 Utility for collect menus from websites.
 

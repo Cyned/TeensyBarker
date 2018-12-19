@@ -1,7 +1,25 @@
-.DS_Store
-data/
-fortest/
-logs.txt
+
+.idea/
+.ipynb_checkpoints
+
+# Byte-compiled
 __pycache__
+*.pyc
+
+# Log files
+*.log
+logs.txt
+
+.DS_Store
+fortest/
+
+# Word documents
 ~$*
 *.ini
+
+# data dir
+data/*
+
+# keep data, responses, menus folders
+!data/.responses
+!data/.menus
