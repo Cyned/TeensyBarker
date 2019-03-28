@@ -19,9 +19,9 @@ def get_args():
 
 if __name__ == '__main__':
 
-    args = get_args()
-    google_map = GoogleMapService()
-
+    # args = get_args()
+    # google_map = GoogleMapService()
+    #
     # df = google_map.get_places(location=(args.loc_x, args.loc_y),
     #                            type_=args.type,
     #                            radius=args.radius,
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     with BDPlaces() as db:
         db.test()
         db.add(data=df)
-        # for item in db.get_place(columns=['name', 'website']):
-        #     print(item)
-        # print(db.get_working_time(place_ids=93))
+        for item in db.get_place(columns=['name', 'website']):
+            print(item)
+        print(db.get_working_time(place_ids=93))
     pass

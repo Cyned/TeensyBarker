@@ -9,7 +9,7 @@ from app.config import APP_DIR
 def create_logger():
 
     logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
 
     formatter = logging.Formatter('[%(asctime)s - %(levelname)s %(module)s %(funcName)s] - %(message)s')
     fh = TimedRotatingFileHandler(path_join(APP_DIR, 'logger', 'MAIN.log'), when='midnight', encoding='utf-8')

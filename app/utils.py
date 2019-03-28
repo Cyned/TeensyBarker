@@ -1,6 +1,5 @@
 import re
 import json
-import warnings
 
 import pandas as pd
 import numpy as np
@@ -9,9 +8,6 @@ from bs4 import BeautifulSoup
 
 from config import DB_PLACES_COLUMNS, DB_WORKING_TIME_COLUMNS
 from working_time import WorkingTime
-
-
-warnings.filterwarnings('ignore')
 
 
 def transform_df_to_places(data: pd.DataFrame, columns_dict: dict):
@@ -121,7 +117,8 @@ def get_address(serie: pd.Series):
     addresses = np.array([None] * len(serie))
     cities = np.array([None] * len(serie))
     for index, row in enumerate(serie):
-        soup = BeautifulSoup(string_parser(row))
+        # TODO remove str function
+        soup = BeautifulSoup(string_parser(str(row)))
         addresses[index] = soup.find('span', class_='street-address').text
         cities[index] = soup.find('span', class_='locality').text
     return addresses, cities
@@ -168,7 +165,7 @@ def string_parser(query: str):
     return query
 
 
-def get_value(x: str, first: bool=True):
+def get_value(x, first: bool=True):
     """
     Get collection from json query
 
@@ -179,7 +176,8 @@ def get_value(x: str, first: bool=True):
     :return: collection
     """
 
-    x = string_parser(x)
+    # TODO remove str function
+    x = string_parser(str(x))
     if type(x) is list and first:
         return x[0]
     return x

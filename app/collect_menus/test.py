@@ -2,7 +2,7 @@ import unittest
 import os
 import shutil
 
-from restaurants import Restaurant
+from collect_menus.restaurants import Restaurant
 
 
 class SiteTests(unittest.TestCase):
