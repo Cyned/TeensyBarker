@@ -1,7 +1,4 @@
-import sys
 import argparse
-
-import pandas as pd
 
 from google_maps import GoogleMapService
 from databases import BDPlaces
@@ -18,25 +15,16 @@ def get_args():
 
 
 if __name__ == '__main__':
+    args = get_args()
+    google_map = GoogleMapService()
 
-    # args = get_args()
-    # google_map = GoogleMapService()
-    #
-    # df = google_map.get_places(location=(args.loc_x, args.loc_y),
-    #                            type_=args.type,
-    #                            radius=args.radius,
-    #                            response_file=args.response_file,
-    #                            )
-    # if df is not None:
-    #     df.to_csv('data/khreschatyk_new.csv', index=False)
-    # else:
-    #     sys.exit('Error')
-
-    df = pd.read_csv('data/khreschatyk_new.csv').fillna('')
+    data = google_map.get_places(
+        location=(args.loc_x, args.loc_y), type_=args.type, radius=args.radius,
+    )
 
     with BDPlaces() as db:
         db.test()
-        db.add(data=df)
+        db.add(data=data)
         for item in db.get_place(columns=['name', 'website']):
             print(item)
         print(db.get_working_time(place_ids=93))
