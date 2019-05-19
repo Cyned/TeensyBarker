@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 
 from bs4 import BeautifulSoup
-from typing import Tuple, Sequence
+from typing import Tuple, Sequence, Any, Optional
 
 from parquet import read_parquet
 from config import DB_PLACES_COLUMNS, DB_WORKING_TIME_COLUMNS, REQUESTS_DIR
@@ -30,7 +30,7 @@ def transform_df_to_places(data: pd.DataFrame, columns_dict: dict) -> pd.DataFra
     }
     df = data[list(columns.values())].rename(columns=dict(zip(columns.values(), columns.keys())))
     if 'adr_address' in data.columns:
-        address, city = get_address(data['adr_address'])
+        address, city = get_address(series=data['adr_address'].values)
         df[columns_dict['address']] = address
         df[columns_dict['city']]    = city
     else:
@@ -40,7 +40,7 @@ def transform_df_to_places(data: pd.DataFrame, columns_dict: dict) -> pd.DataFra
     return df
 
 
-def transform_df_to_working_time(data: pd.DataFrame, place_ids: Tuple[Tuple[str, str]], columns_dict: dict) -> pd.DataFrame:
+def transform_df_to_working_time(data: pd.DataFrame, place_ids: Tuple[Tuple[str, str]], columns_dict: dict) -> Optional[pd.DataFrame]:
     """
     Transform DataFrame to needful view for the WorkingTime table
     :param data: pandas.DataFrame with GoogleMaps API information
@@ -56,7 +56,7 @@ def transform_df_to_working_time(data: pd.DataFrame, place_ids: Tuple[Tuple[str,
     wt = WorkingTime()
     wt.parse(
         ids=new_data['place_id'],
-        times=[get_value(tmp, first=False) for tmp in new_data['opening_hours_weekday_text']],
+        times=[json.loads(mini_data.replace("'", '"')) for mini_data in new_data['opening_hours_weekday_text']],
     )
     if wt.ids:
         results[columns_dict['place_id']]  = wt.ids
@@ -64,42 +64,39 @@ def transform_df_to_working_time(data: pd.DataFrame, place_ids: Tuple[Tuple[str,
         results[columns_dict['open_time']] = wt.time
     else:
         return None
-    return list(zip(*results.values()))
+    return pd.DataFrame(list(zip(*results.values())))
 
 
-def delete_existed(data: pd.DataFrame, columns: Tuple[str], results: Tuple[str]) -> pd.DataFrame:
+def delete_existed(data: pd.DataFrame, columns: Tuple[str], results: Sequence[Sequence[Any]]) -> pd.DataFrame:
     """
     Delete from current data records that columns have results values
+    Take a warning that results to compare have to be defined type
     :param data: data from GoogleMaps API request
     :param columns: columns to compare
     :param results: values to delete in data
     :return: new data frame
     """
-
     if not columns or not results:
         raise ValueError('Empty attributes')
-    results = tuple(zip(*results))
     if len(columns) != len(results):
         raise ValueError('Columns and results attributes have to be one shape.')
-
     if len(columns) == 1:
-        return data.loc[~data[columns[0]].apply(lambda x: get_value(x) in results[0])]
-    return data.loc[~np.logical_and(
-        *[data[columns[index]].apply(lambda x: get_value(x) in results[index]) for index in range(len(results))]
+        return data.loc[data[columns[0]].apply(lambda x: x not in results[0])]
+    return data.loc[np.logical_and.reduce(
+        [data[columns[index]].apply(lambda x: x not in results[index]) for index in range(len(results))]
     )]
 
 
-def get_address(series: pd.Series) -> Tuple[Sequence, Sequence]:
+def get_address(series: Sequence) -> Tuple[Sequence, Sequence]:
     """
-    Parse html to get address and city of each item of serie.
+    Parse html to get address and city of each item of series.
     :param series: pandas.Series object; HTML with address information
     :return: two numpy.array
     """
     addresses = np.array([None] * len(series))
     cities = np.array([None] * len(series))
     for index, row in enumerate(series):
-        # TODO remove str function
-        soup = BeautifulSoup(markup=string_parser(str(row)), features='lxml')
+        soup = BeautifulSoup(markup=row, features='lxml')
         addresses[index] = soup.find('span', class_='street-address').text
         cities[index] = soup.find('span', class_='locality').text
     return addresses, cities
@@ -120,39 +117,6 @@ def decode_working_time(results: Tuple[Tuple[str, str, str]]) -> dict:
         else:
             dict_[key] = wt.decode(days=item[1], time=item[2])
     return dict_
-
-
-def string_parser(query: str):
-    """
-    Parse the query to find the collections in it
-    :param query: string to parse
-    :return: collection
-    """
-    pattern = r'^\[(?P<list_>.*)\]$'
-    result = re.search(pattern, query)
-    if result:
-        if not result.group('list_').startswith('\'<'):  # in case if query is html code like <span id="1">text</span>
-            return json.loads(
-                '{"text": ' + result.group('list_').replace('\'', '"').replace('"[', '[').replace(']"', ']')
-                + ' , "status" : "OK"}', encoding='utf-8',
-            )['text']
-        else:
-            return result.group('list_')
-    return query
-
-
-def get_value(x: str, first: bool = True):
-    """
-    Get collection from json query
-    :param x: json query
-    :param first: if it is a list return the first element
-    :return: collection
-    """
-    # TODO remove str function
-    x = string_parser(str(x))
-    if type(x) is list and first:
-        return x[0]
-    return x
 
 
 if __name__ == '__main__':

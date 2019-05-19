@@ -8,7 +8,7 @@ from psycopg2 import ProgrammingError as DBResultsError
 from typing import Sequence, Tuple
 
 from databases.base import BasePostgres
-from utilities import db_insert, db_select, db_search
+from databases.utilities import db_insert, db_select, db_search
 from utils import transform_df_to_places, transform_df_to_working_time, delete_existed, decode_working_time
 from config import (
     DB_FILE_NAME, DB_SECTION, DB_PLACES_TABLE, DB_PLACES_COLUMNS,
@@ -54,48 +54,42 @@ class BDPlaces(BasePostgres):
 
     def add(self, data: pd.DataFrame):
         """
-        Add records to the database
+        Add records `data` to the database
         :param data: pandas.DataFrame to insert into table
         """
-
-        df = delete_existed(data=data, columns=('reference',), results=self.get_place(columns='place_id'))
+        df = delete_existed(data=data, columns=('reference',), results=tuple(zip(*self.get_place(columns='place_id'))))
         if df.empty:
             logger.info('There are no new places.')
-            return
-        data_places = transform_df_to_places(data=df, columns_dict=DB_PLACES_COLUMNS)
-        if not data_places:
-            logger.info(f'No records were written into {DB_WORKING_TIME_TABLE}.')
             return
         # insert data to Places table
         try:
             result = db_insert(
                 cursor    = self.conn.cursor,
                 table     = DB_PLACES_TABLE,
-                columns   = DB_PLACES_COLUMNS.values(),
-                values    = data_places,
+                columns   = list(DB_PLACES_COLUMNS.values()),
+                values    = transform_df_to_places(data=df, columns_dict=DB_PLACES_COLUMNS),
                 returning = (DB_PLACES_COLUMNS['place_id'], DB_PLACES_ID_COLUMN),
             )
             logger.info(f'{DB_PLACES_TABLE} records were written.')
-        except Exception:
-            logger.exception(f'Error was caught while writen new records to {DB_PLACES_TABLE} database.')
-            result = None
+        except Exception as e:
+            logger.error(f'Error was caught while writen new records to {DB_PLACES_TABLE} database.')
+            logger.exception(e)
+            return
         # insert data to WorkingTime table
+        data_times = transform_df_to_working_time(
+            data=df, place_ids=result, columns_dict=DB_WORKING_TIME_COLUMNS,
+        )
         try:
-            if result:
-                data_times = transform_df_to_working_time(
-                    data=df, place_ids=result, columns_dict=DB_WORKING_TIME_COLUMNS,
-                )
-                db_insert(
-                    cursor  = self.conn.cursor,
-                    table   = DB_WORKING_TIME_TABLE,
-                    columns = DB_WORKING_TIME_COLUMNS.values(),
-                    values  = data_times,
-                )
-                logger.info(f'{DB_WORKING_TIME_TABLE} records were written')
-            else:
-                logger.info(f'No records were written into {DB_PLACES_TABLE}.')
-        except Exception:
-            logger.exception(f'Error was caught while writen new records to {DB_WORKING_TIME_TABLE} database.')
+            db_insert(
+                cursor  = self.conn.cursor,
+                table   = DB_WORKING_TIME_TABLE,
+                columns = list(DB_WORKING_TIME_COLUMNS.values()),
+                values  = data_times,
+            )
+            logger.info(f'{DB_WORKING_TIME_TABLE} records were written')
+        except Exception as e:
+            logger.error(f'Error was caught while writen new records to {DB_WORKING_TIME_TABLE} database.')
+            logger.exception(e)
 
     def get_place(self, columns: Sequence[str]) -> Tuple[Tuple]:
         """
@@ -110,14 +104,14 @@ class BDPlaces(BasePostgres):
         :param place_ids: list of id of places
         :return: data
         """
-        if type(place_ids) is not tuple and type(place_ids) is not list:
+        if not isinstance(place_ids, Sequence):
             place_ids = (place_ids,)
         dict_ = dict()
         for place_id in place_ids:
             results = db_search(
                 cursor     = self.conn.cursor,
                 table      = DB_WORKING_TIME_TABLE,
-                columns    = DB_WORKING_TIME_COLUMNS.values(),
+                columns    = list(DB_WORKING_TIME_COLUMNS.values()),
                 conditions = {DB_WORKING_TIME_COLUMNS['place_id']: place_id},
                 operator   = 'or',
             )
@@ -132,8 +126,8 @@ class BDPlaces(BasePostgres):
         if type(columns) is not tuple and type(columns) is not list:
             columns = [columns]
         results = db_select(
-            cursor   = self.conn.cursor,
-            table    = table,
+            cursor  = self.conn.cursor,
+            table   = table,
             columns = [DB_PLACES_COLUMNS[column] for column in columns],
         )
         return results

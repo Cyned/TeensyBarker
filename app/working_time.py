@@ -15,23 +15,20 @@ class WorkingTime(object):
     }
 
     def __init__(self):
-        self._days = None
-        self._time = None
-        self._ids  = None
+        self._days   = None
+        self._time   = None
+        self._ids    = None
         self.decoder = None
 
     def parse(self, ids, times):
         """
         Parse working time.
-
         :param ids: ids of the place
         :param times: list of the working times
         """
-
         self._days = []
         self._time = []
         self._ids = []
-
         for id_, time in zip(ids, times):
             days = dict()
             for t in time:
@@ -47,12 +44,10 @@ class WorkingTime(object):
     def decode(self, days, time):
         """
         Decode working time encoded in {integer: working_time, } to {weekday: working_time, }
-
         :param days: number of weekdays (example: 125 - Monday, Thursday, Friday)
         :param time: working time
         :return: dictionary, {weekday: working_time, }
         """
-
         working_time = dict()
         if type(days) is int:
             days = str(days)
@@ -67,12 +62,10 @@ class WorkingTime(object):
     def clean_time(query):
         """
         Lower and clean string
-
         :param query: query to clean
         :type query: str
         :return: cleaned string
         """
-
         return query.lower().replace(' ', '')
 
     @property
@@ -91,13 +84,11 @@ class WorkingTime(object):
 def get_key(dict_: dict, value):
     """
     Search key of the dictionary via its value
-
     :param dict_: dictionary to parse
     :type dict_: dict
     :param value: value to search
     :return: key
     """
-
     for k, v in dict_.items():
         if v == value:
             return k

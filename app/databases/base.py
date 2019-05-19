@@ -8,3 +8,6 @@ class BasePostgres(object):
 
     def get(self, *args, **kwargs):
         raise NotImplementedError
+
+    def execute(self, *args, **kwargs):
+        raise NotImplementedError
