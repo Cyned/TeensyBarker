@@ -1,5 +1,7 @@
 import re
 
+from typing import Sequence, Optional
+
 
 class WorkingTime(object):
 
@@ -20,7 +22,7 @@ class WorkingTime(object):
         self._ids    = None
         self.decoder = None
 
-    def parse(self, ids, times):
+    def parse(self, ids: Sequence[str], times: Sequence[str]):
         """
         Parse working time.
         :param ids: ids of the place
@@ -28,7 +30,7 @@ class WorkingTime(object):
         """
         self._days = []
         self._time = []
-        self._ids = []
+        self._ids  = []
         for id_, time in zip(ids, times):
             days = dict()
             for t in time:
@@ -41,7 +43,7 @@ class WorkingTime(object):
             self._time.extend(days.keys())
             self._days.extend(days.values())
 
-    def decode(self, days, time):
+    def decode(self, days: Optional[str], time: str) -> dict:
         """
         Decode working time encoded in {integer: working_time, } to {weekday: working_time, }
         :param days: number of weekdays (example: 125 - Monday, Thursday, Friday)
@@ -59,11 +61,10 @@ class WorkingTime(object):
         return working_time
 
     @staticmethod
-    def clean_time(query):
+    def clean_time(query: str) -> str:
         """
         Lower and clean string
         :param query: query to clean
-        :type query: str
         :return: cleaned string
         """
         return query.lower().replace(' ', '')
@@ -81,11 +82,10 @@ class WorkingTime(object):
         return self._ids
 
 
-def get_key(dict_: dict, value):
+def get_key(dict_: dict, value: str) -> Optional[str]:
     """
     Search key of the dictionary via its value
     :param dict_: dictionary to parse
-    :type dict_: dict
     :param value: value to search
     :return: key
     """
