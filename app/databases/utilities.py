@@ -1,9 +1,9 @@
 from psycopg2 import ProgrammingError as DBResultsError
-from typing import Sequence, Tuple
+from typing import Sequence, Tuple, Any, Iterable
 from app import collect_logger as logger
 
 
-def db_insert(cursor, table: str, columns: Sequence[str], values, returning=()) -> Tuple[Tuple]:
+def db_insert(cursor, table: str, columns: Sequence[str], values, returning: Tuple = ()) -> Tuple[Tuple]:
     """
     Insert data into Postgres database
     :param cursor: cursor of Postgres database
@@ -29,7 +29,8 @@ def db_insert(cursor, table: str, columns: Sequence[str], values, returning=()) 
         try:
             results = cur.fetchall()
         except DBResultsError as e:
-            logger.exception(e)
+            if returning:
+                logger.exception(e)
             results = ()
     return results
 
@@ -76,39 +77,45 @@ def db_search(cursor, table: str, columns: Sequence[str], conditions: dict, oper
     return results
 
 
-def create_db_query(collection: Sequence, type_: str = 'usual') -> str:
+def create_db_query(collection: Sequence[Any], type_: str = 'usual') -> str:
     """
     Create right postgres request
     :param collection: collection to put into request
     :param type_: type of the request {'usual', 'values'}
     :return: collection`s query
     """
+    if isinstance(collection[0], str) or not isinstance(collection[0], Iterable):
+        collection = [collection]
+
     types = {
-        'usual':  '"{item}",',
-        'values': "'{item}',",
+        'usual':  '"{item}"',
+        'values': "'{item}'",
     }
-    txt = ''
-    for item in collection:
-        if type(item) is float:
-            txt += '{item},'.format(item=item)
-        elif type(item) is int:
-            txt += '{item},'.format(item=item)
-        elif type(item) is str:
-            txt += types[type_].format(item=item)
-        elif type(item) is bool:
-            txt += '{item},'.format(item='TRUE' if item else 'FALSE')
-        elif type(item) is tuple:
-            txt += '({item}),'.format(item=create_db_query(item, type_=type_))
-        # TODO DEFAULTS
-        elif item is None:
-            txt += 'DEFAULT,'
-    return txt[:-1]
+    values = []
+    for sample in collection:
+        val = []
+        for item in sample:
+            if type(item) is float:
+                val.append('{item}'.format(item=item))
+            elif type(item) is int:
+                val.append('{item}'.format(item=item))
+            elif type(item) is str:
+                val.append(types[type_].format(item=item))
+            elif type(item) is bool:
+                val.append('{item}'.format(item='TRUE' if item else 'FALSE'))
+            elif type(item) is tuple:
+                val.append('({item})'.format(item=create_db_query(item, type_=type_)))
+            # TODO DEFAULTS
+            elif item is None:
+                val.append('DEFAULT')
+        values.append(f'({",".join(val)})' if type_ != 'usual' else ",".join(val))
+    return ','.join(values)
 
 
 def create_conditions(conds: dict, operator: str) -> str:
     """
     Create right postgres conditions using WHERE operator
-    :param conds:conditions
+    :param conds: conditions
     :param operator: AND or OR {and, or}
     :return: conditions query
     """

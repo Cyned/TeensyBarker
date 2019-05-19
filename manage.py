@@ -2,6 +2,7 @@ import argparse
 
 from google_maps import GoogleMapService
 from databases import BDPlaces
+from app import collect_logger as logger
 
 
 def get_args():
@@ -21,12 +22,14 @@ if __name__ == '__main__':
     data = google_map.get_places(
         location=(args.loc_x, args.loc_y), type_=args.type, radius=args.radius,
     )
-    data = data.applymap(lambda x: x[0])
+    if data is not None:
+        data = data.applymap(lambda x: x[0])
 
-    with BDPlaces() as db:
-        db.test()
-        db.add(data=data)
-        for item in db.get_place(columns=['name', 'website']):
-            print(item)
-        print(db.get_working_time(place_ids=(93,)))
-    pass
+        with BDPlaces() as db:
+            db.test()
+            db.add(data=data)
+            for item in db.get_place(columns=['name', 'website']):
+                print(item)
+            print(db.get_working_time(place_ids=(101,)))
+    else:
+        logger.info('There is no data got fro GoogleMaps API')

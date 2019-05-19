@@ -62,12 +62,13 @@ class BDPlaces(BasePostgres):
             logger.info('There are no new places.')
             return
         # insert data to Places table
+        places = transform_df_to_places(data=df, columns_dict=DB_PLACES_COLUMNS)
         try:
             result = db_insert(
                 cursor    = self.conn.cursor,
                 table     = DB_PLACES_TABLE,
-                columns   = list(DB_PLACES_COLUMNS.values()),
-                values    = transform_df_to_places(data=df, columns_dict=DB_PLACES_COLUMNS),
+                columns   = places.columns,
+                values    = places.values,
                 returning = (DB_PLACES_COLUMNS['place_id'], DB_PLACES_ID_COLUMN),
             )
             logger.info(f'{DB_PLACES_TABLE} records were written.')
@@ -83,8 +84,8 @@ class BDPlaces(BasePostgres):
             db_insert(
                 cursor  = self.conn.cursor,
                 table   = DB_WORKING_TIME_TABLE,
-                columns = list(DB_WORKING_TIME_COLUMNS.values()),
-                values  = data_times,
+                columns = data_times.columns,
+                values  = data_times.values,
             )
             logger.info(f'{DB_WORKING_TIME_TABLE} records were written')
         except Exception as e:

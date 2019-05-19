@@ -1,4 +1,3 @@
-import re
 import os
 import json
 
@@ -49,7 +48,7 @@ def transform_df_to_working_time(data: pd.DataFrame, place_ids: Tuple[Tuple[str,
     :return: dictionary for WorkingTime table
     """
     dict_ = dict(place_ids)
-    new_data = data[['reference', 'opening_hours_weekday_text']]
+    new_data = data.loc[:, ['reference', 'opening_hours_weekday_text']]
     new_data['place_id'] = new_data['reference'].apply(dict_.get)
 
     results = dict()
@@ -64,7 +63,7 @@ def transform_df_to_working_time(data: pd.DataFrame, place_ids: Tuple[Tuple[str,
         results[columns_dict['open_time']] = wt.time
     else:
         return None
-    return pd.DataFrame(list(zip(*results.values())))
+    return pd.DataFrame(list(zip(*results.values())), columns=results.keys())
 
 
 def delete_existed(data: pd.DataFrame, columns: Tuple[str], results: Sequence[Sequence[Any]]) -> pd.DataFrame:

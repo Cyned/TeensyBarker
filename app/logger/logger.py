@@ -10,7 +10,7 @@ def create_logger(file_name: str):
     :param file_name: name of log file
     :return: logger
     """
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger(name=file_name)
 
     logger.handlers.clear()
     logger.setLevel(logging.DEBUG)
