@@ -1,10 +1,11 @@
 from psycopg2 import ProgrammingError as DBResultsError
+from typing import Sequence, Tuple
+from app import collect_logger as logger
 
 
-def db_insert(cursor, table, columns, values, returning=None):
+def db_insert(cursor, table: str, columns: Sequence[str], values, returning=()) -> Tuple[Tuple]:
     """
     Insert data into Postgres database
-
     :param cursor: cursor of Postgres database
     :param table: name of the table
     :param columns: names of columns
@@ -12,10 +13,9 @@ def db_insert(cursor, table, columns, values, returning=None):
     :param returning: values to return after the insert
     :return: values defined in returning
     """
-
     returns = ''
+    # returning construction
     if returning:
-        # returning construction
         returns = ' RETURNING {values}'.format(values=create_db_query(returning, type_='usual'))
 
     with cursor() as cur:  # create a cursor
@@ -28,15 +28,15 @@ def db_insert(cursor, table, columns, values, returning=None):
             ))
         try:
             results = cur.fetchall()
-        except DBResultsError:
+        except DBResultsError as e:
+            logger.exception(e)
             results = ()
     return results
 
 
-def db_select(cursor, table, columns):
+def db_select(cursor, table: str, columns: Sequence[str]) -> Tuple[Tuple]:
     """
     Select some data from Postgres database
-
     :param cursor: cursor of Postgres database
     :param table: name of the table
     :param columns: names of columns to select
@@ -46,56 +46,47 @@ def db_select(cursor, table, columns):
     with cursor() as cur:
         cur.execute(
             'SELECT {column} FROM "{table}";'.format(
-                column=create_db_query(columns, type_='usual'),
-                table=table,
+                column = create_db_query(columns, type_='usual'),
+                table  = table,
             )
         )
         results = cur.fetchall()
     return results
 
 
-def db_search(cursor, table, columns, conditions, operator='and'):
+def db_search(cursor, table: str, columns: Sequence[str], conditions: dict, operator: str = 'and') -> Tuple[Tuple]:
     """
     Select some data from Postgres database using some conditions with AND
-
     :param cursor: cursor of Postgres database
     :param table: name of the table
     :param columns: names of columns to select
     :param conditions: conditions using to select data
-    :type conditions: dict
     :param operator: AND or OR
-    :type operator: str
-    :return:
+    :return: requested data
     """
-
     with cursor() as cur:
         cur.execute(
-        # print(
             'SELECT {column} FROM "{table}" WHERE {conds};'.format(
-                column=create_db_query(columns, type_='usual'),
-                table=table,
-                conds=create_conditions(conds=conditions, operator=operator),
+                column = create_db_query(columns, type_='usual'),
+                table  = table,
+                conds  = create_conditions(conds=conditions, operator=operator),
             )
         )
         results = cur.fetchall()
     return results
 
 
-def create_db_query(collection, type_: str='usual'):
+def create_db_query(collection: Sequence, type_: str = 'usual') -> str:
     """
     Create right postgres request
-
     :param collection: collection to put into request
-    :param type_: type of the request
-    :type type_: str
+    :param type_: type of the request {'usual', 'values'}
     :return: collection`s query
     """
-
     types = {
         'usual':  '"{item}",',
         'values': "'{item}',",
     }
-
     txt = ''
     for item in collection:
         if type(item) is float:
@@ -111,26 +102,21 @@ def create_db_query(collection, type_: str='usual'):
         # TODO DEFAULTS
         elif item is None:
             txt += 'DEFAULT,'
-
     return txt[:-1]
 
 
-def create_conditions(conds, operator):
+def create_conditions(conds: dict, operator: str) -> str:
     """
     Create right postgres conditions using WHERE operator
-
     :param conds:conditions
-    :type conds: dict
-    :param operator: AND or OR
-    :type operator: str
+    :param operator: AND or OR {and, or}
     :return: conditions query
     """
-
     txt = ''
     for key, value in conds.items():
         txt += '{key} = {value}  {operator}'.format(
-            key=create_db_query((key, ), type_='usual'),
-            value=create_db_query((value, ), type_='values'),
-            operator=operator.upper(),
+            key      = create_db_query((key, ), type_='usual'),
+            value    = create_db_query((value, ), type_='values'),
+            operator = operator.upper(),
         )
     return txt[:-4]

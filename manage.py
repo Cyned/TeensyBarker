@@ -22,10 +22,10 @@ if __name__ == '__main__':
         location=(args.loc_x, args.loc_y), type_=args.type, radius=args.radius,
     )
 
-    with BDPlaces() as db:
-        db.test()
-        db.add(data=data)
-        for item in db.get_place(columns=['name', 'website']):
-            print(item)
-        print(db.get_working_time(place_ids=93))
+    # with BDPlaces() as db:
+    #     db.test()
+    #     db.add(data=data)
+    #     for item in db.get_place(columns=['name', 'website']):
+    #         print(item)
+    #     print(db.get_working_time(place_ids=(93,)))
     pass

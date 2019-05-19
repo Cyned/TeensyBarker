@@ -1,91 +1,79 @@
 import re
+import os
 import json
 
 import pandas as pd
 import numpy as np
 
 from bs4 import BeautifulSoup
+from typing import Tuple, Sequence
 
-from config import DB_PLACES_COLUMNS, DB_WORKING_TIME_COLUMNS
+from parquet import read_parquet
+from config import DB_PLACES_COLUMNS, DB_WORKING_TIME_COLUMNS, REQUESTS_DIR
 from working_time import WorkingTime
 
 
-def transform_df_to_places(data: pd.DataFrame, columns_dict: dict):
+def transform_df_to_places(data: pd.DataFrame, columns_dict: dict) -> pd.DataFrame:
     """
     Transform DataFrame to needful view for the Places table
-
     :param data: pandas.DataFrame with GoogleMaps API information
-    :type data: pd.DataFrame
     :param columns_dict: dictionary where values are the columns in current database
-    :type columns_dict: dict
-    :return: dictionary for Places table
+    :return: data frame for Places table
     """
-
-    results = dict()
     columns = {
-        columns_dict['name']:     'name',
-        columns_dict['website']:  'website',
-        columns_dict['address']:  'nan',  # we do not need to parse these object
-        columns_dict['city']:     'nan',  # we do not need to parse these object
-        columns_dict['place_id']: 'reference',
-        columns_dict['loc_x']:    'geometry_location_lng',
-        columns_dict['loc_y']:    'geometry_location_lat',
-        columns_dict['phone']:    'international_phone_number',
+        columns_dict['name']     : 'name',
+        columns_dict['website']  : 'website',
+        columns_dict['place_id'] : 'reference',
+        columns_dict['loc_x']    : 'geometry_location_lng',
+        columns_dict['loc_y']    : 'geometry_location_lat',
+        columns_dict['phone']    : 'international_phone_number',
     }
-    for key, value in columns.items():
-        if value in data.columns:
-            results[key] = list(data[value].apply(get_value))
-        else:
-            results[key] = [None] * data.shape[0]
+    df = data[list(columns.values())].rename(columns=dict(zip(columns.values(), columns.keys())))
     if 'adr_address' in data.columns:
-        results[columns_dict['address']], results[columns_dict['city']] = get_address(data['adr_address'])
-    if columns[columns_dict['phone']] in data.columns:
-        results[columns_dict['phone']] = [x.replace(' ', '').replace('+', '') for x in results[columns_dict['phone']]]
-    return list(zip(*results.values()))
+        address, city = get_address(data['adr_address'])
+        df[columns_dict['address']] = address
+        df[columns_dict['city']]    = city
+    else:
+        df[columns_dict['address']] = []
+        df[columns_dict['city']]    = []
+    df[columns_dict['phone']] = df[columns_dict['phone']].apply(lambda x: x.replace(' ', '').replace('+', ''))
+    return df
 
 
-def transform_df_to_working_time(data: pd.DataFrame, place_ids, columns_dict: dict):
+def transform_df_to_working_time(data: pd.DataFrame, place_ids: Tuple[Tuple[str, str]], columns_dict: dict) -> pd.DataFrame:
     """
     Transform DataFrame to needful view for the WorkingTime table
-
     :param data: pandas.DataFrame with GoogleMaps API information
-    :type data: pd.DataFrame
     :param place_ids: ((reference, place_id(in Places table), ...)
-    :type place_ids: tuple
     :param columns_dict: dictionary where values are the columns in current database
-    :type columns_dict: dict
     :return: dictionary for WorkingTime table
     """
-
     dict_ = dict(place_ids)
     new_data = data[['reference', 'opening_hours_weekday_text']]
-    new_data['place_id'] = new_data['reference'].apply(lambda x: dict_.get(get_value(x)))
+    new_data['place_id'] = new_data['reference'].apply(dict_.get)
 
     results = dict()
     wt = WorkingTime()
     wt.parse(
         ids=new_data['place_id'],
-        times=[get_value(tmp, first=False) for tmp in new_data['opening_hours_weekday_text'].values],
+        times=[get_value(tmp, first=False) for tmp in new_data['opening_hours_weekday_text']],
     )
     if wt.ids:
-        results[columns_dict['place_id']] = wt.ids
-        results[columns_dict['days']] = list(map(int, wt.days))
+        results[columns_dict['place_id']]  = wt.ids
+        results[columns_dict['days']]      = list(map(int, wt.days))
         results[columns_dict['open_time']] = wt.time
     else:
         return None
     return list(zip(*results.values()))
 
 
-def delete_existed(data: pd.DataFrame, columns: tuple, results: tuple):
+def delete_existed(data: pd.DataFrame, columns: Tuple[str], results: Tuple[str]) -> pd.DataFrame:
     """
     Delete from current data records that columns have results values
-
     :param data: data from GoogleMaps API request
     :param columns: columns to compare
-    :type columns: tuple
     :param results: values to delete in data
-    :type results: tuple
-    :return: new pd.DataFrame
+    :return: new data frame
     """
 
     if not columns or not results:
@@ -95,43 +83,34 @@ def delete_existed(data: pd.DataFrame, columns: tuple, results: tuple):
         raise ValueError('Columns and results attributes have to be one shape.')
 
     if len(columns) == 1:
-        df = data.loc[
-            ~data[columns[0]].apply(lambda x: get_value(x) in results[0])
-        ]
-    else:
-        df = data.loc[~np.logical_and(
-            *[data[columns[index]].apply(lambda x: get_value(x) in results[index]) for index in range(len(results))]
-        )]
-
-    return df
+        return data.loc[~data[columns[0]].apply(lambda x: get_value(x) in results[0])]
+    return data.loc[~np.logical_and(
+        *[data[columns[index]].apply(lambda x: get_value(x) in results[index]) for index in range(len(results))]
+    )]
 
 
-def get_address(serie: pd.Series):
+def get_address(series: pd.Series) -> Tuple[Sequence, Sequence]:
     """
     Parse html to get address and city of each item of serie.
-
-    :param serie: pandas.Series object; HTML with address information
+    :param series: pandas.Series object; HTML with address information
     :return: two numpy.array
     """
-
-    addresses = np.array([None] * len(serie))
-    cities = np.array([None] * len(serie))
-    for index, row in enumerate(serie):
+    addresses = np.array([None] * len(series))
+    cities = np.array([None] * len(series))
+    for index, row in enumerate(series):
         # TODO remove str function
-        soup = BeautifulSoup(string_parser(str(row)))
+        soup = BeautifulSoup(markup=string_parser(str(row)), features='lxml')
         addresses[index] = soup.find('span', class_='street-address').text
         cities[index] = soup.find('span', class_='locality').text
     return addresses, cities
 
 
-def decode_working_time(results):
+def decode_working_time(results: Tuple[Tuple[str, str, str]]) -> dict:
     """
     Decode results from WorkingTime table
-
     :param results: results ((place_id, days, time), ) from WorkingTime table
     :return:
     """
-
     wt = WorkingTime()
     dict_ = dict()
     for item in results:
@@ -146,12 +125,9 @@ def decode_working_time(results):
 def string_parser(query: str):
     """
     Parse the query to find the collections in it
-
     :param query: string to parse
-    :type query: str
     :return: collection
     """
-
     pattern = r'^\[(?P<list_>.*)\]$'
     result = re.search(pattern, query)
     if result:
@@ -165,17 +141,13 @@ def string_parser(query: str):
     return query
 
 
-def get_value(x, first: bool=True):
+def get_value(x: str, first: bool = True):
     """
     Get collection from json query
-
     :param x: json query
-    :type x: str
     :param first: if it is a list return the first element
-    :type first: bool
     :return: collection
     """
-
     # TODO remove str function
     x = string_parser(str(x))
     if type(x) is list and first:
@@ -184,11 +156,8 @@ def get_value(x, first: bool=True):
 
 
 if __name__ == '__main__':
-    # data = pd.read_csv('../data/places.csv')
-    # df = transform_df_to_places(data=data, columns_dict=DB_PLACES_COLUMNS)
-    # print(df)
-
-    data = pd.read_csv('../data/khreschatyk_new.csv')
-    df = transform_df_to_working_time(data, DB_WORKING_TIME_COLUMNS)
-    print(df)
-    pass
+    data = read_parquet(path=os.path.join(REQUESTS_DIR, 'places.parquet'))
+    df = transform_df_to_places(data=data, columns_dict=DB_PLACES_COLUMNS)
+    print(df.head())
+    # df = transform_df_to_working_time(data=data, columns_dict=DB_WORKING_TIME_COLUMNS)
+    # print(df.head())
