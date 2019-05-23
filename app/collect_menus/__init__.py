@@ -1,7 +1,7 @@
-from app.collect_menus.restaurants import Restaurant, RestaurantPage
+from app.collect_menus.places import Place, PlacePage
 
 
 __all__ = [
-    'Restaurant',
-    'RestaurantPage',
+    'Place',
+    'PlacePage',
 ]

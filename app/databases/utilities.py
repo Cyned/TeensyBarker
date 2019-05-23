@@ -1,6 +1,6 @@
 from psycopg2 import ProgrammingError as DBResultsError
 from typing import Sequence, Tuple, Any, Iterable
-from app import collect_logger as logger
+from app import basic_logger as logger
 
 
 def db_insert(cursor, table: str, columns: Sequence[str], values, returning: Tuple = ()) -> Tuple[Tuple]:

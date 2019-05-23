@@ -14,7 +14,7 @@ from config import (
     DB_FILE_NAME, DB_SECTION, DB_PLACES_TABLE, DB_PLACES_COLUMNS,
     DB_WORKING_TIME_TABLE, DB_WORKING_TIME_COLUMNS, DB_PLACES_ID_COLUMN,
 )
-from app import collect_logger as logger
+from app import basic_logger as logger
 
 
 class BDPlaces(BasePostgres):
@@ -129,7 +129,7 @@ class BDPlaces(BasePostgres):
         results = db_select(
             cursor  = self.conn.cursor,
             table   = table,
-            columns = [DB_PLACES_COLUMNS[column] for column in columns],
+            columns = [DB_PLACES_COLUMNS[column] if DB_PLACES_COLUMNS.get(column) else column for column in columns],
         )
         return results
 

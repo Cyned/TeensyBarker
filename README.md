@@ -5,7 +5,7 @@ Utility for collect menus from websites.
 
 # Getting Started
 
-1. Make sure you have **Python >=3.7.0** and **pip** for appropriate Python version
+1. Make sure you have **Python >=3.7.0** and **pip** for appropriate Python version. Also ypu will need wkhtmltopdf==0.12.4-1
 2. Install all requirements via following command
 ```
 pip3 install -r requirements.txt
