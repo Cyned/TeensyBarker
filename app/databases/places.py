@@ -9,7 +9,7 @@ from typing import Sequence, Tuple
 
 from databases.base import BasePostgres
 from databases.utilities import db_insert, db_select, db_search
-from utils import transform_df_to_places, transform_df_to_working_time, delete_existed, decode_working_time
+from collect_placecs.utils import transform_df_to_places, transform_df_to_working_time, delete_existed, decode_working_time
 from config import (
     DB_FILE_NAME, DB_SECTION, DB_PLACES_TABLE, DB_PLACES_COLUMNS,
     DB_WORKING_TIME_TABLE, DB_WORKING_TIME_COLUMNS, DB_PLACES_ID_COLUMN,

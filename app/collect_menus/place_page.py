@@ -6,7 +6,7 @@ from collect_menus.limiter import MaxMenuPages
 from app import parser_logger as logger
 
 
-class PlaceBase(object):
+class PageBase(object):
     @property
     def menu_images(self) -> set:
         raise NotImplemented
@@ -23,7 +23,7 @@ class PlaceBase(object):
 
 
 @MaxMenuPages
-class PlacePage(PlaceBase):
+class Page(PageBase):
     """ Looks for menu images or pdf files on the restaurant page """
 
     def __init__(self, website: str):

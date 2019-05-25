@@ -10,6 +10,11 @@ PROJECT_DIR: str = APP_DIR[:APP_DIR.rfind('/')]
 GOOGLE_API_KEY: str = 'AIzaSyBrpyh7_0Xl2FpfPr1XnBHFcFQJzzlTZec'
 
 
+# flask app configs
+HOST: str = '127.0.0.1'
+PORT: str = '9000'
+
+
 # database configs
 DB_FILE_NAME: str = os.path.join(APP_DIR, 'databases/database.ini')
 DB_SECTION: str = 'postgresql'

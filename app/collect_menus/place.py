@@ -1,7 +1,7 @@
 from config import MENUS_DIR
 from collect_menus.utils import get_filename_from_url
 from collect_menus.file_saver import FileSaver
-from collect_menus.place_page import PlacePage
+from collect_menus.place_page import Page
 from databases import BDPlaces
 from app import parser_logger as logger
 
@@ -31,7 +31,7 @@ class Place(object):
 
     def collect_menu(self):
         """ Find all menu images / documents on the place website and download them """
-        page = PlacePage(website=self.website)
+        page = Page(website=self.website)
         menu_pages, menu_images = page.collect_menu()
 
         logger.info(f'Url {self.website}. '

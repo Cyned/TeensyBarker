@@ -1,6 +1,6 @@
 import argparse
 
-from google_maps import GoogleMapService
+from collect_placecs.google_maps import GoogleMapService
 from databases import BDPlaces
 from app import collect_logger as logger
 

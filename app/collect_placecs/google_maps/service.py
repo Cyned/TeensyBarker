@@ -3,7 +3,7 @@ import pandas as pd
 from tqdm import tqdm
 from typing import Tuple, Optional
 
-from google_maps.google_map import places_nearby_search, place_details
+from collect_placecs.google_maps import places_nearby_search, place_details
 from app import collect_logger as logger
 
 
