@@ -1,7 +1,20 @@
 import random
 
+from typing import Set
+
 from config import MAX_MENU_PAGES
 from collect_menus.utils import count_calls
+
+
+def get_random(sequence: Set, n: int = 5) -> Set:
+    """
+    Get `n` random elements from the sequence
+    :param sequence: sequence to sample
+    :param n: number of elements to return
+    :return:
+    """
+    random.seed(375)
+    return set(random.sample(sorted(sequence), n))
 
 
 def MaxMenuPages(cls):
@@ -21,18 +34,15 @@ def MaxMenuPages(cls):
         """ Drop menu urls from `menu_pages` and `-images`. Preference is given to `menu_pages` """
         if len(self._menu_pages) + len(self._menu_images) > MAX_MENU_PAGES:
             if len(self._menu_pages) > MAX_MENU_PAGES:
-                random.seed(375)
-                self._menu_pages = set(random.sample(self._menu_pages, MAX_MENU_PAGES))
+                self._menu_pages = get_random(self._menu_pages, MAX_MENU_PAGES)
                 self._menu_images = set()
             if len(self._menu_pages) == 0:
                 if len(self._menu_images) > MAX_MENU_PAGES:
-                    random.seed(375)
-                    self._menu_images = set(random.sample(self._menu_images, MAX_MENU_PAGES))
+                    self._menu_images = get_random(self._menu_images, MAX_MENU_PAGES)
             else:
                 rest = MAX_MENU_PAGES - len(self._menu_pages)
                 if len(self._menu_images) > rest:
-                    random.seed(375)
-                    self._menu_images = set(random.sample(self._menu_images, rest))
+                    self._menu_images = get_random(self._menu_images, rest)
 
     @property
     def menu_pages(self):

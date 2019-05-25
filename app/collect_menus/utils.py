@@ -110,6 +110,8 @@ def get_host(path: str) -> Tuple[str, str]:
     'http://localhost:9000/google.com/about/?search' -> ('localhost:9000', '/google.com/about/')
     'http://google.com/about/?search'                -> ('google.com', '/about/')
     """
+    if not path.startswith('http'):
+        path = 'http://' + path
     parsed = urlparse(path)
     return parsed.netloc, parsed.path
 
