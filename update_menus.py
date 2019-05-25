@@ -20,7 +20,8 @@ if __name__ == "__main__":
         results = db.get_place(columns=(DB_PLACES_ID_COLUMN, 'website'))
         for place_id, website in tqdm(results, total=len(results), desc='Search menus'):
             if website:
+                logger.info(f'Start analyzing {place_id}: {website}')
                 restaurant = Place(website=website, place_id=str(place_id))
                 restaurant.collect_menu()
             else:
-                logger.info(f'No website. {place_id}')
+                logger.info(f'No website: {place_id}')

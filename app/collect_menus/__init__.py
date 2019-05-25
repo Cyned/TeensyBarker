@@ -1,4 +1,5 @@
-from app.collect_menus.places import Place, PlacePage
+from app.collect_menus.place import Place
+from app.collect_menus.place_page import PlacePage
 
 
 __all__ = [

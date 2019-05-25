@@ -7,8 +7,8 @@ from app import collect_logger as logger
 
 def get_args():
     parser = argparse.ArgumentParser(description='Update Places Postgres database')
-    parser.add_argument('--loc_x', type=float, default=50.447230)
-    parser.add_argument('--loc_y', type=float, default=30.522673)
+    parser.add_argument('--loc_x', type=float, default=50.445945)
+    parser.add_argument('--loc_y', type=float, default=30.440573)
     parser.add_argument('--type', type=str, default='restaurant')
     parser.add_argument('--radius', type=int, default=10000)
     parser.add_argument('--response_file', type=str, default='')
@@ -23,7 +23,7 @@ if __name__ == '__main__':
         location=(args.loc_x, args.loc_y), type_=args.type, radius=args.radius,
     )
     if data is not None:
-        data = data.applymap(lambda x: x[0])
+        data = data.applymap(lambda x: x[0] if x else x)
 
         with BDPlaces() as db:
             db.test()
@@ -32,4 +32,4 @@ if __name__ == '__main__':
                 print(item)
             print(db.get_working_time(place_ids=(101,)))
     else:
-        logger.info('There is no data got fro GoogleMaps API')
+        logger.info('There is no data got from GoogleMaps API')

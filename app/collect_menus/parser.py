@@ -35,6 +35,7 @@ class Parser(object):
         with self.__bs_lock:
             self._bs = BeautifulSoup(content, features="lxml")
 
+            # to display hidden elements
             htmlfile = self._bs.prettify().replace("display: none", "display: block")
             logger.debug(f'parsed {self.url}')
 
