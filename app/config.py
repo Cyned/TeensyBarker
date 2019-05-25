@@ -18,21 +18,29 @@ DB_SECTION: str = 'postgresql'
 DB_PLACES_TABLE: str = 'Places'
 DB_PLACES_ID_COLUMN: str = 'PlaceId'
 DB_PLACES_COLUMNS: dict = {
-    'name':     'Name',
-    'website':  'Website',
-    'address':  'Address',
-    'city':     'City',
-    'place_id': 'GooglePin',
-    'loc_x':    'CoordinateX',
-    'loc_y':    'CoordinateY',
-    'phone':    'Phone',
+    'name'     : 'Name',
+    'website'  : 'Website',
+    'address'  : 'Address',
+    'city'     : 'City',
+    'place_id' : 'GooglePin',
+    'loc_x'    : 'CoordinateX',
+    'loc_y'    : 'CoordinateY',
+    'phone'    : 'Phone',
 }
 
 DB_WORKING_TIME_TABLE: str = 'WorkingTime'
 DB_WORKING_TIME_COLUMNS: dict = {
-    'place_id':  'PlaceId',
-    'days':      'Days',
+    'place_id' : 'PlaceId',
+    'days'     : 'Days',
     'open_time': 'OpenTime',
+}
+
+DB_MENUS_TABLE: str = 'Menus'
+DB_MENUS_ID_COLUMN: str = 'MenuId'
+DB_MENUS_COLUMNS: dict = {
+    'place_id' : 'PlaceId',
+    'file_name': 'MenuLinkToFS',
+    'date'     : 'DateMenuUpdated',
 }
 
 # folder to data

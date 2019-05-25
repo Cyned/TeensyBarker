@@ -13,6 +13,7 @@ from utils import transform_df_to_places, transform_df_to_working_time, delete_e
 from config import (
     DB_FILE_NAME, DB_SECTION, DB_PLACES_TABLE, DB_PLACES_COLUMNS,
     DB_WORKING_TIME_TABLE, DB_WORKING_TIME_COLUMNS, DB_PLACES_ID_COLUMN,
+    DB_MENUS_TABLE, DB_MENUS_COLUMNS, DB_MENUS_ID_COLUMN,
 )
 from app import basic_logger as logger
 
@@ -92,6 +93,19 @@ class BDPlaces(BasePostgres):
             logger.error(f'Error was caught while writen new records to {DB_WORKING_TIME_TABLE} database.')
             logger.exception(e)
 
+    def add_menu(self, data: dict):
+        """
+
+        :param data:
+        :return:
+        """
+        db_insert(
+            cursor=self.conn.cursor,
+            table=DB_MENUS_TABLE,
+            columns=list(data.keys()),
+            values=list(data.values()),
+        )
+
     def get_place(self, columns: Sequence[str]) -> Tuple[Tuple]:
         """
         Get columns from Places in database.
@@ -118,6 +132,20 @@ class BDPlaces(BasePostgres):
             )
             dict_.update(decode_working_time(results))
         return dict_
+
+    def get_menus(self, file_name: str) -> Tuple:
+        """
+
+        :param file_name: name of the file to search in the data base
+        :return:
+        """
+        results = db_search(
+            cursor     = self.conn.cursor,
+            table      = DB_MENUS_TABLE,
+            columns    = [DB_MENUS_ID_COLUMN],
+            conditions = {DB_MENUS_COLUMNS['file_name']: file_name},
+        )
+        return results
 
     def get(self, table: str, columns: Sequence[str]) -> Tuple[Tuple]:
         """

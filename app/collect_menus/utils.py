@@ -56,29 +56,6 @@ def tokenize_url(url: str) -> List:
     return [lemmatizer.lemmatize(word) for word in re.split(r'[\.?\-\/]+', parsed.path[1:] + parsed.query)]
 
 
-# def save_to_db(file_path: str, place_id: str):
-#     """
-#     Save to the database link to the file
-#     :param file_path: path to the file
-#     :param place_id: id of the menu
-#     """
-#     with BDPlaces() as db:
-#         res = db.execute('select "MenuId" from "Menus" where "MenuLinkToFS" = \'' +
-#                          file_path + '\';')
-#
-#         if res:
-#             # File path is already in the database => update DateMenuUpdated
-#             menu_id = str(res[0][0])
-#             db.execute('update "Menus" set "DateMenuUpdated" = current_timestamp' +
-#                        ' where "MenuId" = \'' + menu_id + '\';')
-#         else:
-#             # Not in the database => save filepath & DateMenuUpdated
-#             db.execute('insert into "Menus"' +
-#                        ' ("PlaceId", "MenuLinkToFS", "DateMenuUpdated")' +
-#                        ' values (' +
-#                        place_id + ', \'' + file_path + '\', current_timestamp);')
-
-
 def find_all_relative_urls(content: str) -> List[str]:
     """
     Find all urls in the web page
