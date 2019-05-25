@@ -1,14 +1,14 @@
 import argparse
 
-from collect_placecs.google_maps import GoogleMapService
+from collect_places.google_maps import GoogleMapService
 from databases import BDPlaces
 from app import collect_logger as logger
 
 
 def get_args():
     parser = argparse.ArgumentParser(description='Update Places Postgres database')
-    parser.add_argument('--loc_x', type=float, default=50.445945)
-    parser.add_argument('--loc_y', type=float, default=30.440573)
+    parser.add_argument('--loc_x', type=float, default=50.445990)
+    parser.add_argument('--loc_y', type=float, default=30.440773)
     parser.add_argument('--type', type=str, default='restaurant')
     parser.add_argument('--radius', type=int, default=10000)
     parser.add_argument('--response_file', type=str, default='')

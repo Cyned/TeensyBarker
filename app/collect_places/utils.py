@@ -7,9 +7,9 @@ import numpy as np
 from bs4 import BeautifulSoup
 from typing import Tuple, Sequence, Any, Optional
 
-from collect_placecs.parquet import read_parquet
+from collect_places.parquet import read_parquet
 from config import DB_PLACES_COLUMNS, REQUESTS_DIR
-from collect_placecs.working_time import WorkingTime
+from collect_places.working_time import WorkingTime
 
 
 def transform_df_to_places(data: pd.DataFrame, columns_dict: dict) -> pd.DataFrame:

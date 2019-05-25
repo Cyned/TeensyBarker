@@ -68,9 +68,11 @@ class Place(object):
         if res:
             # in case file name is already exists in the database we should update date
             db.execute(f"""update "Menus" set "DateMenuUpdated" = current_timestamp where "MenuId" = '{res[0][0]}';""")
+            logger.info(f'{file_name} was updated in the database')
         else:
             # Not in the database => save filepath & DateMenuUpdated
             db.execute('insert into "Menus"' +
                        ' ("PlaceId", "MenuLinkToFS", "DateMenuUpdated")' +
                        ' values (' +
                        place_id + ', \'' + file_name + '\', current_timestamp);')
+            logger.info(f'{file_name} was inserted into the database')
