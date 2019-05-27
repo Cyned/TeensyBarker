@@ -1,14 +1,14 @@
 import argparse
 
 from collect_places.google_maps import GoogleMapService
-from databases import BDPlaces
+from databases import DBPlaces
 from app import collect_logger as logger
 
 
 def get_args():
     parser = argparse.ArgumentParser(description='Update Places Postgres database')
-    parser.add_argument('--loc_x', type=float, default=50.445990)
-    parser.add_argument('--loc_y', type=float, default=30.440773)
+    parser.add_argument('--loc_x', type=float, default=50.445000)
+    parser.add_argument('--loc_y', type=float, default=30.440005)
     parser.add_argument('--type', type=str, default='restaurant')
     parser.add_argument('--radius', type=int, default=10000)
     parser.add_argument('--response_file', type=str, default='')
@@ -25,10 +25,9 @@ if __name__ == '__main__':
     if data is not None:
         data = data.applymap(lambda x: x[0] if x else x)
 
-        with BDPlaces() as db:
-            db.test()
-            db.add(data=data)
-            for item in db.get_place(columns=['name', 'website']):
+        with DBPlaces() as db:
+            db.add_places(data=data)
+            for item in db.get_places(columns=['name', 'website']):
                 print(item)
             print(db.get_working_time(place_ids=(101,)))
     else:

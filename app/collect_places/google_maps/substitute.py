@@ -2,7 +2,7 @@ import os
 
 import pandas as pd
 
-from collect_places.google_maps import GoogleMapService as gms
+from collect_places.google_maps.service import GoogleMapService as gms
 from collect_places.parquet import read_parquet
 from config import REQUESTS_DIR
 

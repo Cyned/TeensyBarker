@@ -56,10 +56,11 @@ def MaxMenuPages(cls):
         drop(self)
         return self._menu_images
 
-    parse_url_method = cls.parse_url
+    if MAX_MENU_PAGES is not None:
+        parse_url_method = cls.parse_url
 
-    cls.parse_url    = parse_url
-    cls.menu_pages   = menu_pages
-    cls.menu_images  = menu_images
+        cls.parse_url    = parse_url
+        cls.menu_pages   = menu_pages
+        cls.menu_images  = menu_images
 
     return cls

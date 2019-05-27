@@ -2,6 +2,7 @@ import threading
 import requests
 
 from bs4 import BeautifulSoup
+from typing import List
 
 from collect_menus.utils import find_all_relative_urls, replace_with_host, get_host
 from app import parser_logger as logger
@@ -55,10 +56,10 @@ class Parser(object):
         if host:
             self._host = host
 
-    def get_links(self) -> set:
+    def get_links(self) -> List:
         """ Get links from the web site """
-        return {link['href'] for link in self._bs.findAll(name="a") if link.get('href') and self.host in link['href']}
+        return [link['href'] for link in self._bs.findAll(name="a") if link.get('href') and self.host in link['href']]
 
-    def get_images(self) -> set:
+    def get_images(self) -> List:
         """ Get all images from the web site """
-        return {link['src'] for link in self._bs.findAll(name="img") if link.get('src') and self.host in link}
+        return [link['src'] for link in self._bs.findAll(name="img") if link.get('src') and self.host in link]

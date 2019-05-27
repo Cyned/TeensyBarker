@@ -1,5 +1,5 @@
-from databases.places import BDPlaces
+from databases.places import DBPlaces
 
 __all__ = [
-    'BDPlaces',
+    'DBPlaces',
 ]

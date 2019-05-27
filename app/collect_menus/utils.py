@@ -41,7 +41,7 @@ def get_filename_from_url(url: str) -> str:
     :param url: url
     """
     host, path = get_host(path=url)
-    return path.replace('/', '_')
+    return path[1:].replace('/', '_')
 
 
 def tokenize_url(url: str) -> List:

@@ -4,7 +4,6 @@ import os
 
 from os.path import join as path_join, exists
 from os import makedirs
-from typing import Union
 
 from config import MENUS_DIR
 from app import parser_logger as logger
@@ -57,7 +56,7 @@ class FileSaver(object):
             url = 'http://' + url
         # TODO replace
         file_name = file_name.replace(".html", "")
-        file_name = f'{path_join(self.root, file_name)}.pdf'
+        file_name = f'{path_join(self.root, file_name)}'
         if exists(file_name):
             os.remove(file_name)
         try:

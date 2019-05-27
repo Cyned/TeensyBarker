@@ -3,7 +3,6 @@ from typing import Set, Tuple
 from collect_menus.utils import is_menu_link, is_image_link, count_calls
 from collect_menus.parser import Parser
 from collect_menus.limiter import MaxMenuPages
-from app import parser_logger as logger
 
 
 class PageBase(object):
@@ -61,15 +60,15 @@ class Page(PageBase):
             self.used_urls.add(url)
         except Exception:
             return
-        url_to_parse = set()
-        for link in parser.get_links() | parser.get_images():
+        url_to_parse = []
+        for link in parser.get_links() + parser.get_images():
             if is_menu_link(link) and link not in self.menu_pages:
                 if is_image_link(link):
                     self.menu_images.add(link)
                 else:
                     self.menu_pages.add(link)
             elif link not in self.used_urls:
-                url_to_parse.add(link)
+                url_to_parse.append(link)
             continue
 
         # parse url deeper
