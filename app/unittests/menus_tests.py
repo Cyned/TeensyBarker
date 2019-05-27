@@ -4,14 +4,13 @@ import shutil
 
 from os.path import join as path_join
 
-from collect_menus.places import Place
+from collect_menus.place import Place
 
 
 class SiteTests(unittest.TestCase):
     """ Test finding menu on the different web sites """
 
     def __init__(self, *args, **kwargs):
-        """"""
         super(SiteTests, self).__init__(*args, **kwargs)
         self.test_dir         : str  = "test"
         self.for_test_dir     : str  = "for_test"
@@ -25,7 +24,7 @@ class SiteTests(unittest.TestCase):
 
     def find_menus(self, url: str):
         """ Get all filenames from test and template folders """
-        restaurant = Place(url, self.test_dir)
+        restaurant = Place(website=url, place_id=self.test_dir)
         restaurant.collect_menu()
 
         folder_name = self.get_folder_name_from_url(url)

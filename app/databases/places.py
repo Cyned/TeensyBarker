@@ -1,6 +1,6 @@
 import pandas as pd
 
-from typing import Sequence, Tuple, Optional, List, Any
+from typing import Sequence, Tuple, Optional, Any
 
 from databases.base import BasePostgres
 from collect_places.utils import (
