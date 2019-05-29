@@ -8,6 +8,7 @@ def create_logger(file_name: str, level : int = logging.DEBUG):
     """
     Create basic logger
     :param file_name: name of log file
+    :param level: level of logger to output
     :return: logger
     """
     logger = logging.getLogger(name=file_name)

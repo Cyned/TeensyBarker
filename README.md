@@ -15,6 +15,7 @@ Utility for collect menus and other needful data from places.
     ```
     impprt nltk
     nltk.download('wordnet')
+    nltk.download('punkt')
     ```
 
 ## Connect to the database

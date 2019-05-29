@@ -24,13 +24,10 @@ if __name__ == '__main__':
         data = google_map.get_places(
             location=(args.loc_x, args.loc_y), type_=args.type, radius=args.radius,
         )
-        if data is not None:
+        if data is None:
+            logger.info('There is no data got from GoogleMaps API')
+        else:
             data = data.applymap(lambda x: x[0] if x else x)
-
+            data['name'] = data.name.str.lower()
             with DBPlaces() as db:
                 db.add_places(data=data)
-                for item in db.get_places(columns=['name', 'website']):
-                    print(item)
-                print(db.get_working_time(place_ids=(101,)))
-        else:
-            logger.info('There is no data got from GoogleMaps API')

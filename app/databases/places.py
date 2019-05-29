@@ -55,7 +55,6 @@ class DBPlaces(BasePostgres):
                 table     = DB_WORKING_TIME_TABLE,
                 columns   = data_times.columns,
                 values    = data_times.values,
-                returning = (DB_PLACES_COLUMNS['place_id'], DB_PLACES_ID_COLUMN),
             )
             logger.info(f'{DB_WORKING_TIME_TABLE} records were written')
         except Exception as e:
@@ -88,6 +87,26 @@ class DBPlaces(BasePostgres):
         if results:
             return results[0][0]
         return None
+
+    def get_info_place_from_name(self, place_name: str) -> dict:
+        """
+        Get all information about the place  from from the database
+        :param place_name: name of the place to search
+        :return: dictionaru with information
+        """
+        results = self.search(
+            table=DB_PLACES_TABLE,
+            columns=[DB_PLACES_ID_COLUMN] + list(DB_PLACES_COLUMNS.values()),
+            conditions={DB_PLACES_COLUMNS['name']: place_name},
+        )
+        if not results:
+            return {}
+        place_id = results[0][0]
+        working_time: dict = self.get_working_time(place_ids=(place_id,))
+        return dict(zip(
+            list(DB_PLACES_COLUMNS.keys()) + ['working_time'],
+            results[0][1:] + (working_time[place_id], ),
+        ))
 
     def get_working_time(self, place_ids: Sequence[int]) -> dict:
         """

@@ -53,7 +53,7 @@ MENUS_DIR: str = os.path.join(PROJECT_DIR, 'data/menus/')
 REQUESTS_DIR: str = os.path.join(PROJECT_DIR, 'data/requests/')
 
 # use substitute of the GoogleMaps Services
-SUBSTITUTE: bool = True
+SUBSTITUTE: bool = False
 
 
 # List of names of dishes
@@ -65,4 +65,4 @@ with open(os.path.join(PROJECT_DIR, 'data/dishes.pkl'), 'rb') as dishes_file:
 MAX_MENU_PAGES = 5
 
 # Maximum of menus file to return via API Menu request
-MAX_MENU_FILES = 1
+# MAX_MENU_FILES = 1

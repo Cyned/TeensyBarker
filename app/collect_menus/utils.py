@@ -2,14 +2,12 @@ import re
 
 from urllib.parse import urlparse
 from typing import List, Iterable, Tuple
-from nltk.stem import WordNetLemmatizer
+
 from functools import wraps
 
 from constants import IMAGE_FORMATS, MENU_NAMES
 from config import DISHES
-
-
-lemmatizer = WordNetLemmatizer()
+from app import lemmatizer
 
 
 def is_image_link(url: str) -> bool:
