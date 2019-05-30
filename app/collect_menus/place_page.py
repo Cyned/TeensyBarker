@@ -90,7 +90,7 @@ class Page(PageBase):
         except Exception as e:
             logger.exception(e)
             return
-        url_to_parse = set()
+        url_to_parse = []
         for link in parser.get_links() + parser.get_images():
             if is_menu_link(link) and link not in self.menu_pages:
                 if is_image_link(link):
@@ -98,7 +98,7 @@ class Page(PageBase):
                 else:
                     self.menu_pages.add(link)
             elif link not in self.used_urls:
-                url_to_parse.add(link)
+                url_to_parse.append(link)
             continue
 
         # parse url deeper
