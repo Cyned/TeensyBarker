@@ -27,7 +27,7 @@ def get_menu():
         except Exception as e:
             logger.exception(e)
     else:
-        error_message('There is no such a place.')
+        return error_message('There is no such a place.')
     return error_message('Internal server error.')
 
 
@@ -44,7 +44,7 @@ def get_place():
     if score != 0.0:
         return jsonify(dict(status='success', **place_info))
     else:
-        error_message('There is no such a place.')
+        return error_message('There is no such a place.')
     return error_message('Internal server error.')
 
 
