@@ -1,8 +1,9 @@
 from typing import Set, Tuple
 
-from collect_menus.utils import is_menu_link, is_image_link, count_calls
+from collect_menus.utils import is_menu_link, is_image_link, count_calls, get_host
 from collect_menus.parser import Parser
 from collect_menus.limiter import MaxMenuPages
+from app import parser_logger as logger
 
 
 class PageBase(object):
@@ -21,6 +22,34 @@ class PageBase(object):
         raise NotImplemented
 
 
+class UsedUrls(object):
+    def __init__(self):
+        self.used_urls: set = set()
+
+    def add(self, url):
+        """
+        Add new value to the set
+        :param url: url to add
+        """
+        netloc, path = get_host(url)
+        self.used_urls.add(f'{netloc.replace("www.", "")}{path}')
+
+    def update(self, urls):
+        """
+        Add new values to the set
+        :param urls: urls to add
+        """
+        for url in urls:
+            self.add(url)
+
+    def __contains__(self, url):
+        netloc, path = get_host(url)
+        return f'{netloc.replace("www.", "")}{path}' in self.used_urls
+
+    def __str__(self):
+        return str(self.used_urls)
+
+
 @MaxMenuPages
 class Page(PageBase):
     """ Looks for menu images or pdf files on the restaurant page """
@@ -32,7 +61,7 @@ class Page(PageBase):
         self._website     : str = website
         self._menu_pages  : set = set()  # all menu urls from web site
         self._menu_images : set = set()  # all images url from web site
-        self.used_urls    : set = set()  # urls that are already checked for menus
+        self.used_urls = UsedUrls()  # urls that are already checked for menus
 
     @property
     def menu_pages(self) -> Set[str]:
@@ -55,12 +84,13 @@ class Page(PageBase):
         Get all menu links found on the page
         :param url: url to parse to find menus
         """
+        self.used_urls.add(url)
         try:
             parser = Parser(url=url)
-            self.used_urls.add(url)
-        except Exception:
+        except Exception as e:
+            logger.exception(e)
             return
-        url_to_parse = []
+        url_to_parse = set()
         for link in parser.get_links() + parser.get_images():
             if is_menu_link(link) and link not in self.menu_pages:
                 if is_image_link(link):
@@ -68,7 +98,7 @@ class Page(PageBase):
                 else:
                     self.menu_pages.add(link)
             elif link not in self.used_urls:
-                url_to_parse.append(link)
+                url_to_parse.add(link)
             continue
 
         # parse url deeper

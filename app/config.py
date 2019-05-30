@@ -11,8 +11,8 @@ GOOGLE_API_KEY: str = 'AIzaSyBrpyh7_0Xl2FpfPr1XnBHFcFQJzzlTZec'
 
 
 # flask app configs
-HOST: str = '127.0.0.1'
-PORT: str = '9000'
+HOST: str = '0.0.0.0'
+PORT: str = '80'
 
 
 # database configs
