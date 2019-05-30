@@ -20,7 +20,9 @@ def limiter(func: Callable) -> Callable:
         """ Wrapper of decorator """
         results, score = func(*args, **kwargs)
         random.seed(3413)
-        return random.choice(results), score
+        if results:
+            return random.choice(results), score
+        return results, score
     return wrapper
 
 
