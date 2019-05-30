@@ -26,9 +26,8 @@ def get_menu():
             return send_file(menu_path, attachment_filename='menu.pdf')
         except Exception as e:
             logger.exception(e)
-    else:
-        return error_message('There is no such a place.')
-    return error_message('Internal server error.')
+            return error_message('Internal server error.')
+    return error_message('There is no such a place.')
 
 
 @unexpected_error
@@ -43,9 +42,7 @@ def get_place():
     logger.info(f'Score: {score*100:.2f}%')
     if score != 0.0:
         return jsonify(dict(status='success', **place_info))
-    else:
-        return error_message('There is no such a place.')
-    return error_message('Internal server error.')
+    return error_message('There is no such a place.')
 
 
 @app.route('/places', methods=['GET'])
