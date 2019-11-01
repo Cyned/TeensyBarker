@@ -22,7 +22,7 @@ bs4==0.0.1
 lxml==4.3.2
 
 # data science
-nltk==3.4
+nltk==3.4.5
 
 pdfkit==0.6.1
 tqdm==4.28.1
